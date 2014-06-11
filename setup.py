@@ -36,7 +36,6 @@ setup(
     test_suite="runtests.runtests",
     zip_safe=False,
     install_requires=[
-        "django-autoslug",
         "django-model-utils",
     ],
 )
