@@ -4,7 +4,7 @@ Run with "manage.py test popolo".
 """
 
 from django.test import TestCase
-from popolo.behaviors.tests import TimestampableTests, DateframeableTests, PermalinkableTests
+from popolo.behaviors.tests import TimestampableTests, DateframeableTests
 from popolo.models import Person, Organization, Post, ContactDetail
 from faker import Factory
 from unittest import skip
@@ -12,7 +12,7 @@ from unittest import skip
 faker = Factory.create('it_IT') #a factory to create fake names for tests
 
 
-class PersonTestCase(DateframeableTests, TimestampableTests, PermalinkableTests, TestCase):
+class PersonTestCase(DateframeableTests, TimestampableTests, TestCase):
     model = Person
     object_name = 'person'
 
@@ -35,23 +35,6 @@ class PersonTestCase(DateframeableTests, TimestampableTests, PermalinkableTests,
         ]
         p.add_memberships(os)
         self.assertEqual(p.memberships.count(), 3)
-
-    def test_memberships_slug_source(self):
-        p = Person.objects.create(name=unicode(faker.name()), birth_date=unicode(faker.year()))
-        os = [
-            Organization.objects.create(name=unicode(faker.company()))
-            for i in range(3)
-        ]
-        p.add_memberships(os)
-
-        memberships = p.memberships.all()
-        for membership in memberships:
-            membership.label = membership.organization.name
-            membership.save()
-
-        self.assertTrue(memberships[0].slug_source, memberships[0].label)
-        self.assertTrue(memberships[1].slug_source, memberships[1].label)
-        self.assertTrue(memberships[2].slug_source, memberships[2].label)
 
     def test_add_role(self):
         p = Person.objects.create(name=unicode(faker.name()), birth_date=unicode(faker.year()))
@@ -97,7 +80,7 @@ class PersonTestCase(DateframeableTests, TimestampableTests, PermalinkableTests,
         self.assertEqual(p.links.count(), 1)
         self.assertEqual(p.sources.filter(url='http://link.example.org/').count(), 0)
 
-class OrganizationTestCase(DateframeableTests, TimestampableTests, PermalinkableTests, TestCase):
+class OrganizationTestCase(DateframeableTests, TimestampableTests, TestCase):
     model = Organization
     object_name = 'organization'
 

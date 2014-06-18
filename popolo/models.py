@@ -8,11 +8,10 @@ from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 
-from .behaviors.models import Permalinkable, Timestampable, Dateframeable, GenericRelatable
+from .behaviors.models import Timestampable, Dateframeable, GenericRelatable
 from .querysets import PostQuerySet, OtherNameQuerySet, ContactDetailQuerySet, MembershipQuerySet, OrganizationQuerySet, PersonQuerySet
 
-
-class Person(Dateframeable, Timestampable, Permalinkable, models.Model):
+class Person(Dateframeable, Timestampable, models.Model):
     """
     A real person, alive or dead
     """
@@ -50,11 +49,6 @@ class Person(Dateframeable, Timestampable, Permalinkable, models.Model):
     # array of items referencing "http://popoloproject.com/schemas/link.json#"
     sources = generic.GenericRelation('Source', help_text="URLs to source documents about the person")
 
-    @property
-    def slug_source(self):
-        return self.name
-
-    url_name = 'person-detail'
     objects = PassThroughManager.for_queryset_class(PersonQuerySet)()
 
     def add_membership(self, organization):
@@ -90,7 +84,7 @@ class Person(Dateframeable, Timestampable, Permalinkable, models.Model):
     def __unicode__(self):
         return unicode(self.name)
 
-class Organization(Dateframeable, Timestampable, Permalinkable, models.Model):
+class Organization(Dateframeable, Timestampable, models.Model):
     """
     A group with a common purpose or reason for existence that goes beyond the set of people belonging to it
     """
@@ -129,11 +123,6 @@ class Organization(Dateframeable, Timestampable, Permalinkable, models.Model):
     # array of items referencing "http://popoloproject.com/schemas/link.json#"
     sources = generic.GenericRelation('Source', help_text="URLs to source documents about the organization")
 
-    @property
-    def slug_source(self):
-        return self.name
-
-    url_name = 'organization-detail'
     objects = PassThroughManager.for_queryset_class(OrganizationQuerySet)()
 
     def add_member(self, person):
@@ -155,7 +144,7 @@ class Organization(Dateframeable, Timestampable, Permalinkable, models.Model):
     def __unicode__(self):
         return unicode(self.name)
 
-class Post(Dateframeable, Timestampable, Permalinkable, models.Model):
+class Post(Dateframeable, Timestampable, models.Model):
     """
     A position that exists independent of the person holding it
     """
@@ -175,10 +164,6 @@ class Post(Dateframeable, Timestampable, Permalinkable, models.Model):
 
     # array of items referencing "http://popoloproject.com/schemas/link.json#"
     sources = generic.GenericRelation('Source', help_text="URLs to source documents about the post")
-
-    @property
-    def slug_source(self):
-        return self.label
 
     objects = PassThroughManager.for_queryset_class(PostQuerySet)()
 
@@ -220,10 +205,6 @@ class Membership(Dateframeable, Timestampable, models.Model):
 
     # array of items referencing "http://popoloproject.com/schemas/link.json#"
     sources = generic.GenericRelation('Source', help_text="URLs to source documents about the membership")
-
-    @property
-    def slug_source(self):
-        return self.label
 
     objects = PassThroughManager.for_queryset_class(MembershipQuerySet)()
 

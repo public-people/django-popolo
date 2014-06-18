@@ -5,7 +5,6 @@ from django.core.validators import RegexValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from model_utils.fields import AutoCreatedField, AutoLastModifiedField
-from autoslug import AutoSlugField
 from datetime import datetime
 
 __author__ = 'guglielmo'
@@ -73,31 +72,3 @@ class Timestampable(models.Model):
 
     class Meta:
         abstract = True
-
-
-class Permalinkable(models.Model):
-    """
-    An abstract base class model that provides a unique slug,
-    and the methods necessary to handle the permalink
-    """
-    from django.utils.text import slugify
-
-    slug = AutoSlugField(
-        populate_from=lambda instance: instance.slug_source,
-        unique=True,
-        slugify=slugify
-    )
-
-    class Meta:
-        abstract = True
-
-    def get_url_kwargs(self, **kwargs):
-        kwargs.update(getattr(self, 'url_kwargs', {}))
-        return kwargs
-
-    @models.permalink
-    def get_absolute_url(self):
-        url_kwargs = self.get_url_kwargs(slug=self.slug)
-        return (self.url_name, (), url_kwargs)
-
-
