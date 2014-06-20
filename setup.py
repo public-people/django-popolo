@@ -13,13 +13,15 @@ def read_file(filename):
 
 
 setup(
-    name='django-popolo',
+    name='mysociety-django-popolo',
     version=__import__('popolo').__version__,
     author='Guglielmo Celata',
     author_email='guglielmo@openpolis.it',
+    maintainer='Matthew Somerville',
+    maintainer_email='matthew@mysociety.org',
     packages=find_packages(),
     include_package_data=True,
-    url='http://github.com/openpolis/django-popolo',
+    url='http://github.com/mysociety/django-popolo',
     license='Affero',
     description=u' '.join(__import__('popolo').__doc__.splitlines()).strip(),
     classifiers=[

@@ -4,9 +4,5 @@ python:
 install: 
   - "pip install -r tests_requirements.txt"
   - "python setup.py install"
-  - "pip install coveralls"
 script: 
-  - "coverage run --source=popolo runtests.py"
-after_success:
-  - coverage report -m
-  - coveralls
+  - "python runtests.py"

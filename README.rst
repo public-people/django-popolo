@@ -2,11 +2,8 @@ popolo
 ========================
 
 
-.. image:: https://travis-ci.org/ciudadanointeligente/django-popolo.png?branch=master
-  :target: https://travis-ci.org/ciudadanointeligente/django-popolo
-
-.. image:: https://coveralls.io/repos/ciudadanointeligente/django-popolo/badge.png
-  :target: https://coveralls.io/r/ciudadanointeligente/django-popolo
+.. image:: https://travis-ci.org/mysociety/django-popolo.png?branch=master
+  :target: https://travis-ci.org/mysociety/django-popolo
 
 
 Welcome to the documentation for django-popolo!
@@ -26,21 +23,16 @@ Project is under way and any help is welcome.
 
 Installation
 ------------
-To install ``django-popolo`` as a third party app within a django project, you need to add it to the django project's requirements.txt.
-There is no public python package, yet, so you'll need to install this directly from github.
 
-Since ``django-popolo`` requires ``django-model-utils``, you need to put the requirement for ``django-popolo``
-after the requirements for django::
-
-    Django
-    ...
-    -e git+git@github.com:openpolis/django-popolo.git#egg=django_popolo-dev
-
+To install ``django-popolo`` as a third party app within a Django project, you
+need to add it to the Django project's requirements.txt. You can do this from
+GitHub in the usual way, or using the ``mysociety-django-popolo`` package on
+PyPI.
 
 Running the Tests
 ------------------------------------
 
-You can run the tests with via::
+You can run the tests with::
 
     python setup.py test
 
