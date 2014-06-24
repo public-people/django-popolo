@@ -1,0 +1,4 @@
+0.0.2
+    * Python 3 compatibility changes (James McKinney).
+0.0.1
+    * Initial release of fork on PyPI.
