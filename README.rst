@@ -12,6 +12,13 @@ popolo
 Welcome to the documentation for django-popolo!
 
 
+This fork of django-popolo is the same as the `upstream code
+<https://github.com/openpolis/django-popolo>`_ except that the models use
+integer IDs rather than slugs, and the models have no slug field. This is to
+enable projects using this package to pick their own (perhaps different) slug
+behaviour.
+
+
 **django-popolo** is a django-based implementation of the
 `Popolo's open government data specifications <http://popoloproject.com/>`_.
 

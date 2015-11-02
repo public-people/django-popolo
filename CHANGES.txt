@@ -1,4 +1,8 @@
+0.0.5
+    * Sync with upstream (at 3a34d5cb, plus PR #28).
 0.0.2
     * Python 3 compatibility changes (James McKinney).
 0.0.1
-    * Initial release of fork on PyPI.
+    * Initial release of fork on PyPI. The only difference with upstream is the
+      removal of slugs and autoslug, so something using this app can decide how
+      it handles them.
