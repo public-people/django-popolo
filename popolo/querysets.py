@@ -5,8 +5,6 @@ __author__ = 'guglielmo'
 from django.db import models
 from datetime import datetime
 
-
-
 class DateframeableQuerySet(models.query.QuerySet):
     """
     A custom ``QuerySet`` allowing easy retrieval of current, past and future instances
@@ -50,6 +48,7 @@ class DateframeableQuerySet(models.query.QuerySet):
 
         return self.filter(Q(start_date__lte=moment) &
                            (Q(end_date__gte=moment) | Q(end_date__isnull=True)))
+
 
 
 

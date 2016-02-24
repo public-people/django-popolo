@@ -2,8 +2,11 @@ popolo
 ========================
 
 
-.. image:: https://travis-ci.org/mysociety/django-popolo.png?branch=master
+.. image:: https://travis-ci.org/mysociety/django-popolo.svg?branch=master
   :target: https://travis-ci.org/mysociety/django-popolo
+
+.. image:: https://coveralls.io/repos/mysociety/django-popolo/badge.svg?branch=master&service=github
+  :target: https://coveralls.io/github/mysociety/django-popolo?branch=master
 
 
 Welcome to the documentation for django-popolo!
