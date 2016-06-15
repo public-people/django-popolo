@@ -85,6 +85,7 @@ class PopItImporter(object):
         area_id_to_parent_area_id = {}
         def update_optional_area(object_data):
             area_data = object_data.get('area')
+            area_id = object_data.get('area_id')
             area = None
             if area_data:
                 if not area_data.get('id'):
@@ -95,6 +96,9 @@ class PopItImporter(object):
                 with show_data_on_error('area_data', area_data):
                     area_id, area = self.update_area(area_data)
                     area_id_to_django_object[area_id] = area
+            elif area_id:
+                #if we have an area_id instead of an inline area
+                area = self.get_existing_django_object('area', area_id)
             return area
 
         # Create all areas:
