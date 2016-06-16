@@ -100,6 +100,11 @@ class PopItImporter(object):
                 #if we have an area_id instead of an inline area
                 area = self.get_existing_django_object('area', area_id)
             return area
+        self.events = {}
+        # store events in a temp local dict:
+        if 'events' in data:
+            for event_data in data['events']:
+                self.events[event_data['id']] = event_data
 
         # Create all areas:
         if 'areas' in data:
@@ -400,6 +405,11 @@ class PopItImporter(object):
         result.area = area
         result.start_date = membership_data.get('start_date', '')
         result.end_date = membership_data.get('end_date', '')
+        if 'legislative_period_id' in membership_data:
+            period_data = self.events[membership_data['legislative_period_id']]
+            result.start_date = period_data.get('start_date', '')
+            result.end_date = period_data.get('end_date', '')
+
         result.save()
         # Create an identifier with the PopIt ID:
         if not existing:
