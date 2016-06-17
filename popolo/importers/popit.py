@@ -90,12 +90,12 @@ class PopItImporter(object):
             if area_data:
                 if not area_data.get('id'):
                     return None
-                area_parent_id = area_data.get('parent_id')
-                if area_parent_id:
-                    area_id_to_parent_area_id
                 with show_data_on_error('area_data', area_data):
                     area_id, area = self.update_area(area_data)
                     area_id_to_django_object[area_id] = area
+                area_parent_id = area_data.get('parent_id')
+                if area_parent_id:
+                    area_id_to_parent_area_id[area_id] = area_parent_id
             elif area_id:
                 #if we have an area_id instead of an inline area
                 area = self.get_existing_django_object('area', area_id)
@@ -163,8 +163,8 @@ class PopItImporter(object):
 
         # Finally set any parent area relationships on areas:
         for area_id, parent_area_id in area_id_to_parent_area_id.items():
-            area = area_id_to_parent_area_id[area_id]
-            parent_area = area_id_to_parent_area_id[parent_area_id]
+            area = area_id_to_django_object[area_id]
+            parent_area = area_id_to_django_object[parent_area_id]
             area.parent = parent_area
             area.save()
 
