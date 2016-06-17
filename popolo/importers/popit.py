@@ -406,9 +406,21 @@ class PopItImporter(object):
         result.start_date = membership_data.get('start_date', '')
         result.end_date = membership_data.get('end_date', '')
         if 'legislative_period_id' in membership_data:
+            # Strictly speaking there may be cases where it would not
+            # be correct to use the leglislative period's start and
+            # end dates as defaults for the membership start and end
+            # dates. Ideally, django-popolo would support Popolo
+            # events, so we could just associate the membership with
+            # one of them and omit the start / end dates as in the
+            # original data. However, until events have been added
+            # this is a useful default for people importing data where
+            # memberships have a legislative period but no start / end
+            # date.
             period_data = self.events[membership_data['legislative_period_id']]
-            result.start_date = period_data.get('start_date', '')
-            result.end_date = period_data.get('end_date', '')
+            if not result.start_date:
+                result.start_date = period_data.get('start_date', '')
+            if not result.end_date:
+                result.end_date = period_data.get('end_date', '')
 
         result.save()
         # Create an identifier with the PopIt ID:
