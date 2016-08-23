@@ -5,6 +5,24 @@ from django.test import TestCase
 from popolo.importers.popit import PopItImporter
 from popolo.models import Membership, Organization, Person
 
+# There are some very basic tests here.  For when there is time, the
+# following things could be added or improved:
+#
+#  * Test creation of areas
+#  * Test creation of posts
+#  * Test creation of contact details
+#  * Test creation of links
+#  * Test creation of sources
+#  * Test creation of other names
+#  * Test creation of generic identifiers
+#  * Test updates rather than creation of the above
+#  * Tests for the legislative_period_id in memberships special case
+#  * Test setting of a parent area
+#  * Test setting of a parent organisation
+#  * Test handling of areas on posts
+#  * Test the show_data_on_error context manager
+#  * Test that objects that have disappeared are removed (not yet implemented)
+
 class BasicImporterTests(TestCase):
 
     def test_simplest_person(self):
