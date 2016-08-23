@@ -136,15 +136,18 @@ class PopItImporter(object):
                 post_id_to_django_object[popit_id] = post
         # Create all people:
         person_id_to_django_object = {}
+        inline_memberships = []
         for person_data in data.get('persons', []):
             with show_data_on_error('person_data', person_data):
+                inline_memberships += person_data.pop('memberships', [])
                 popit_id, person = \
                     self.update_person(person_data)
                 person_id_to_django_object[popit_id] = person
         # Now create all memberships to tie the people, organizations
         # and posts together:
         membership_id_to_django_object = {}
-        for membership_data in data.get('memberships', []):
+        all_memberships = data.get('memberships', []) + inline_memberships
+        for membership_data in all_memberships:
             with show_data_on_error('membership_data', membership_data):
                 area = update_optional_area(membership_data)
                 membership_id, membership = \
