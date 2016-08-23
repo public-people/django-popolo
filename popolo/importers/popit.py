@@ -118,7 +118,7 @@ class PopItImporter(object):
                 org_id_to_django_object[popit_id] = organization
         # Then go through the organizations again to set the parent
         # organization:
-        for org_data in data['organizations']:
+        for org_data in data.get('organizations', []):
             with show_data_on_error('org_data', org_data):
                 org = org_id_to_django_object[org_data['id']]
                 parent_id = org_data.get('parent_id')
@@ -136,7 +136,7 @@ class PopItImporter(object):
                 post_id_to_django_object[popit_id] = post
         # Create all people:
         person_id_to_django_object = {}
-        for person_data in data['persons']:
+        for person_data in data.get('persons', []):
             with show_data_on_error('person_data', person_data):
                 popit_id, person = \
                     self.update_person(person_data)
@@ -144,7 +144,7 @@ class PopItImporter(object):
         # Now create all memberships to tie the people, organizations
         # and posts together:
         membership_id_to_django_object = {}
-        for membership_data in data['memberships']:
+        for membership_data in data.get('memberships', []):
             with show_data_on_error('membership_data', membership_data):
                 area = update_optional_area(membership_data)
                 membership_id, membership = \
