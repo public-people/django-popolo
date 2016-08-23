@@ -43,6 +43,14 @@ class PopItImporter(object):
     core Popolo data from that PopIt export into django-popolo's
     Django models.
 
+    This will create Identifier objects that let you access the
+    instances of Django models via their IDs in the source data.  You
+    can customize the prefix used in the scheme of the Identifier
+    objects with the id_prefix argument to this class's initializer.
+    e.g. if you use id_prefix="popolo:" then each Person will have an
+    Identifier with scheme "popolo:person" with their ID from the
+    source.  (The default for id_prefix is "popit-".)
+
     This is designed to be easy to subclass to extend its
     behaviour. For example:
 
@@ -60,7 +68,14 @@ class PopItImporter(object):
       fields to add extra attributes to the django-popolo models, then
       you can add that data by overriding one or more of
       update_person, update_membership, etc.
+
     """
+
+    def __init__(self, id_prefix=None):
+        if id_prefix is None:
+            self.id_prefix = 'popit-'
+        else:
+            self.id_prefix = id_prefix
 
     def get_popolo_model_class(self, model_name):
         """A default implementation for getting the Popolo model class"""
@@ -69,14 +84,12 @@ class PopItImporter(object):
     def get_model_class(self, app_label, model_name):
         return apps.get_model(app_label, model_name)
 
-    def import_from_export_json(self, json_filename):
+    def import_from_export_json_data(self, data):
         """Update or create django-popolo models from a PopIt export
 
         You can run this multiple times to update the django-popolo
-        models after the initial import."""
-
-        with open(json_filename) as f:
-            data = json.load(f)
+        models after the initial import. This version of the method takes
+        the JSON data after parsing; i.e. as Python lists, dicts, etc."""
 
         # Keep track of all areas that are found, so that we can later
         # iterate over them and make sure their 'parent' property is
@@ -102,16 +115,14 @@ class PopItImporter(object):
             return area
         self.events = {}
         # store events in a temp local dict:
-        if 'events' in data:
-            for event_data in data['events']:
-                self.events[event_data['id']] = event_data
+        for event_data in data.get('events', []):
+            self.events[event_data['id']] = event_data
 
         # Create all areas:
-        if 'areas' in data:
-            for area_data in data['areas']:
-                with show_data_on_error('area_data', area_data):
-                    area_id, area = self.update_area(area_data)
-                    area_id_to_django_object[area_id] = area
+        for area_data in data.get('areas', []):
+            with show_data_on_error('area_data', area_data):
+                area_id, area = self.update_area(area_data)
+                area_id_to_django_object[area_id] = area
 
         # Do one pass through the organizations:
         org_id_to_django_object = {}
@@ -122,7 +133,7 @@ class PopItImporter(object):
                 org_id_to_django_object[popit_id] = organization
         # Then go through the organizations again to set the parent
         # organization:
-        for org_data in data['organizations']:
+        for org_data in data.get('organizations', []):
             with show_data_on_error('org_data', org_data):
                 org = org_id_to_django_object[org_data['id']]
                 parent_id = org_data.get('parent_id')
@@ -140,15 +151,18 @@ class PopItImporter(object):
                 post_id_to_django_object[popit_id] = post
         # Create all people:
         person_id_to_django_object = {}
-        for person_data in data['persons']:
+        inline_memberships = []
+        for person_data in data.get('persons', []):
             with show_data_on_error('person_data', person_data):
+                inline_memberships += person_data.pop('memberships', [])
                 popit_id, person = \
                     self.update_person(person_data)
                 person_id_to_django_object[popit_id] = person
         # Now create all memberships to tie the people, organizations
         # and posts together:
         membership_id_to_django_object = {}
-        for membership_data in data['memberships']:
+        all_memberships = data.get('memberships', []) + inline_memberships
+        for membership_data in all_memberships:
             with show_data_on_error('membership_data', membership_data):
                 area = update_optional_area(membership_data)
                 membership_id, membership = \
@@ -168,6 +182,18 @@ class PopItImporter(object):
             area.parent = parent_area
             area.save()
 
+    def import_from_export_json(self, json_filename):
+        """Update or create django-popolo models from a PopIt export
+
+        You can run this multiple times to update the django-popolo
+        models after the initial import. This version of the method takes
+        a filename"""
+
+        with open(json_filename) as f:
+            data = json.load(f)
+
+        self.import_from_export_json_data(data)
+
     def get_existing_django_object(self, popit_collection, popit_id):
         Identifier = self.get_popolo_model_class('Identifier')
         if popit_collection not in NEW_COLLECTIONS:
@@ -176,7 +202,7 @@ class PopItImporter(object):
             ))
         try:
             i = Identifier.objects.get(
-                scheme=('popit-' + popit_collection),
+                scheme=(self.id_prefix + popit_collection),
                 identifier=popit_id
             )
             # Following i.content_object doesn't work in a migration, so use
@@ -212,7 +238,7 @@ class PopItImporter(object):
                 self.make_identifier_dict,
                 org_data['identifiers'],
                 result,
-                preserve_predicate=lambda i: i.scheme == 'popit-organization',
+                preserve_predicate=lambda i: i.scheme == self.id_prefix + 'organization',
             )
         # Update contact details:
         self.update_related_objects(
@@ -333,7 +359,7 @@ class PopItImporter(object):
                 self.make_identifier_dict,
                 person_data['identifiers'],
                 result,
-                preserve_predicate=lambda i: i.scheme == 'popit-person',
+                preserve_predicate=lambda i: i.scheme == self.id_prefix + 'person',
             )
         # Update contact details:
         self.update_related_objects(
@@ -476,7 +502,7 @@ class PopItImporter(object):
             self.make_identifier_dict,
             area_data.get('other_identifiers', []),
             result,
-            preserve_predicate=lambda i: i.scheme == 'popit-area',
+            preserve_predicate=lambda i: i.scheme == self.id_prefix + 'area',
         )
         # Update sources:
         self.update_related_objects(
@@ -498,7 +524,7 @@ class PopItImporter(object):
         self.get_popolo_model_class('Identifier').objects.create(
             object_id=django_object.id,
             content_type_id=content_type.id,
-            scheme=('popit-' + popit_collection),
+            scheme=(self.id_prefix + popit_collection),
             identifier=popit_id,
         )
 
