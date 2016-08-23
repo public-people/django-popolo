@@ -69,14 +69,12 @@ class PopItImporter(object):
     def get_model_class(self, app_label, model_name):
         return apps.get_model(app_label, model_name)
 
-    def import_from_export_json(self, json_filename):
+    def import_from_export_json_data(self, data):
         """Update or create django-popolo models from a PopIt export
 
         You can run this multiple times to update the django-popolo
-        models after the initial import."""
-
-        with open(json_filename) as f:
-            data = json.load(f)
+        models after the initial import. This version of the method takes
+        the JSON data after parsing; i.e. as Python lists, dicts, etc."""
 
         # Keep track of all areas that are found, so that we can later
         # iterate over them and make sure their 'parent' property is
@@ -167,6 +165,18 @@ class PopItImporter(object):
             parent_area = area_id_to_django_object[parent_area_id]
             area.parent = parent_area
             area.save()
+
+    def import_from_export_json(self, json_filename):
+        """Update or create django-popolo models from a PopIt export
+
+        You can run this multiple times to update the django-popolo
+        models after the initial import. This version of the method takes
+        a filename"""
+
+        with open(json_filename) as f:
+            data = json.load(f)
+
+        self.import_from_export_json_data(data)
 
     def get_existing_django_object(self, popit_collection, popit_id):
         Identifier = self.get_popolo_model_class('Identifier')
