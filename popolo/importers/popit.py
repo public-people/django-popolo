@@ -100,16 +100,14 @@ class PopItImporter(object):
             return area
         self.events = {}
         # store events in a temp local dict:
-        if 'events' in data:
-            for event_data in data['events']:
-                self.events[event_data['id']] = event_data
+        for event_data in data.get('events', []):
+            self.events[event_data['id']] = event_data
 
         # Create all areas:
-        if 'areas' in data:
-            for area_data in data['areas']:
-                with show_data_on_error('area_data', area_data):
-                    area_id, area = self.update_area(area_data)
-                    area_id_to_django_object[area_id] = area
+        for area_data in data.get('areas', []):
+            with show_data_on_error('area_data', area_data):
+                area_id, area = self.update_area(area_data)
+                area_id_to_django_object[area_id] = area
 
         # Do one pass through the organizations:
         org_id_to_django_object = {}
