@@ -114,3 +114,36 @@ class BasicImporterTests(TestCase):
         membership = Membership.objects.get()
         self.assertEqual(membership.person, person)
         self.assertEqual(membership.organization, organization)
+
+
+    def test_custom_identifier_prefix(self):
+        input_json = '''
+{
+    "persons": [
+        {
+            "id": "a1b2",
+            "name": "Alice"
+        }
+
+    ],
+    "organizations": [
+        {
+            "id": "commons",
+            "name": "House of Commons"
+        }
+    ]
+}
+'''
+        data = json.loads(input_json)
+        importer = PopItImporter(id_prefix='popolo:')
+        importer.import_from_export_json_data(data)
+        self.assertEqual(Person.objects.count(), 1)
+        self.assertEqual(Organization.objects.count(), 1)
+        person = Person.objects.get()
+        organization = Organization.objects.get()
+        person_identifier = person.identifiers.get()
+        organization_identifier = organization.identifiers.get()
+        self.assertEqual(person_identifier.scheme, 'popolo:person')
+        self.assertEqual(person_identifier.identifier, 'a1b2')
+        self.assertEqual(organization_identifier.scheme, 'popolo:organization')
+        self.assertEqual(organization_identifier.identifier, 'commons')

@@ -43,6 +43,14 @@ class PopItImporter(object):
     core Popolo data from that PopIt export into django-popolo's
     Django models.
 
+    This will create Identifier objects that let you access the
+    instances of Django models via their IDs in the source data.  You
+    can customize the prefix used in the scheme of the Identifier
+    objects with the id_prefix argument to this class's initializer.
+    e.g. if you use id_prefix="popolo:" then each Person will have an
+    Identifier with scheme "popolo:person" with their ID from the
+    source.  (The default for id_prefix is "popit-".)
+
     This is designed to be easy to subclass to extend its
     behaviour. For example:
 
@@ -60,7 +68,14 @@ class PopItImporter(object):
       fields to add extra attributes to the django-popolo models, then
       you can add that data by overriding one or more of
       update_person, update_membership, etc.
+
     """
+
+    def __init__(self, id_prefix=None):
+        if id_prefix is None:
+            self.id_prefix = 'popit-'
+        else:
+            self.id_prefix = id_prefix
 
     def get_popolo_model_class(self, model_name):
         """A default implementation for getting the Popolo model class"""
@@ -187,7 +202,7 @@ class PopItImporter(object):
             ))
         try:
             i = Identifier.objects.get(
-                scheme=('popit-' + popit_collection),
+                scheme=(self.id_prefix + popit_collection),
                 identifier=popit_id
             )
             # Following i.content_object doesn't work in a migration, so use
@@ -223,7 +238,7 @@ class PopItImporter(object):
                 self.make_identifier_dict,
                 org_data['identifiers'],
                 result,
-                preserve_predicate=lambda i: i.scheme == 'popit-organization',
+                preserve_predicate=lambda i: i.scheme == self.id_prefix + 'organization',
             )
         # Update contact details:
         self.update_related_objects(
@@ -344,7 +359,7 @@ class PopItImporter(object):
                 self.make_identifier_dict,
                 person_data['identifiers'],
                 result,
-                preserve_predicate=lambda i: i.scheme == 'popit-person',
+                preserve_predicate=lambda i: i.scheme == self.id_prefix + 'person',
             )
         # Update contact details:
         self.update_related_objects(
@@ -487,7 +502,7 @@ class PopItImporter(object):
             self.make_identifier_dict,
             area_data.get('other_identifiers', []),
             result,
-            preserve_predicate=lambda i: i.scheme == 'popit-area',
+            preserve_predicate=lambda i: i.scheme == self.id_prefix + 'area',
         )
         # Update sources:
         self.update_related_objects(
@@ -509,7 +524,7 @@ class PopItImporter(object):
         self.get_popolo_model_class('Identifier').objects.create(
             object_id=django_object.id,
             content_type_id=content_type.id,
-            scheme=('popit-' + popit_collection),
+            scheme=(self.id_prefix + popit_collection),
             identifier=popit_id,
         )
 
