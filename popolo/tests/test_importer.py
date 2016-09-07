@@ -173,3 +173,48 @@ class BasicImporterTests(TestCase):
         self.assertEqual(person_identifier.identifier, 'a1b2')
         self.assertEqual(organization_identifier.scheme, 'popolo:organization')
         self.assertEqual(organization_identifier.identifier, 'commons')
+
+    def test_creates_new_person_if_not_found(self):
+        existing_person = Person.objects.create(name='Algernon')
+        input_json = '''
+{
+    "persons": [
+        {
+            "id": "a1b2",
+            "name": "Alice"
+        }
+    ]
+}
+'''
+        data = json.loads(input_json)
+        importer = PopItImporter()
+        importer.import_from_export_json_data(data)
+        self.assertEqual(Person.objects.count(), 2)
+        new_person = Person.objects.exclude(pk=existing_person.id).get()
+        new_person_identifier = new_person.identifiers.get()
+        self.assertEqual(new_person_identifier.scheme, 'popit-person')
+        self.assertEqual(new_person_identifier.identifier, 'a1b2')
+
+    def test_updates_person_if_found(self):
+        existing_person = Person.objects.create(name='Algernon')
+        existing_person.identifiers.create(
+            scheme='popolo:person',
+            identifier="a1b2"
+        )
+        input_json = '''
+{
+    "persons": [
+        {
+            "id": "a1b2",
+            "name": "Alice"
+        }
+    ]
+}
+'''
+        data = json.loads(input_json)
+        importer = PopItImporter(id_prefix='popolo:')
+        importer.import_from_export_json_data(data)
+        self.assertEqual(Person.objects.count(), 1)
+        # Reget the person from the database:
+        person = Person.objects.get(pk=existing_person.id)
+        self.assertEqual(person.name, 'Alice')
