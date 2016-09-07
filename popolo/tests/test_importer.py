@@ -25,6 +25,14 @@ from popolo.models import Membership, Organization, Person
 
 class BasicImporterTests(TestCase):
 
+    def test_all_top_level_optional(self):
+        # This just check that you don't get an exception when
+        # importing empty Popolo JSON.
+        input_json = '{}'
+        data = json.loads(input_json)
+        importer = PopItImporter()
+        importer.import_from_export_json_data(data)
+
     def test_simplest_person(self):
         input_json = '''
 {

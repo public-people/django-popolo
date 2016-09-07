@@ -126,7 +126,7 @@ class PopItImporter(object):
 
         # Do one pass through the organizations:
         org_id_to_django_object = {}
-        for org_data in data['organizations']:
+        for org_data in data.get('organizations', []):
             with show_data_on_error('org_data', org_data):
                 area = update_optional_area(org_data)
                 popit_id, organization = self.update_organization(org_data, area)
