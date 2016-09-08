@@ -583,9 +583,11 @@ class PopItImporter(object):
         ).exclude(pk__in=object_ids_to_preserve).delete()
 
     def make_contact_detail_dict(self, contact_detail_data):
+        contact_type = contact_detail_data.get('type') or \
+                       contact_detail_data.get('contact_type')
         return {
             'label': contact_detail_data.get('label') or '',
-            'contact_type': contact_detail_data['type'],
+            'contact_type': contact_type,
             'value': contact_detail_data['value'],
             'note': contact_detail_data.get('note') or '',
             'start_date': contact_detail_data.get('valid_from') or '',
