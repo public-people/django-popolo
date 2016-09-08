@@ -459,7 +459,12 @@ class BasicImporterTests(TestCase):
         with self.assertRaisesRegexp(
                 ValidationError,
                 'Ensure this value has at most 512 characters'):
-            importer.import_from_export_json_data(data)
+            # Capture the output just to reduce noise in the test
+            # output - this would include output from
+            # show_data_on_error otherwise.
+            with capture_output() as (out, err):
+                importer.import_from_export_json_data(data)
+
 
     def test_truncation_warn(self):
         long_name = ('Albert ' * 100).strip()
