@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 import json
 import sys
 
@@ -27,6 +28,19 @@ from popolo import models
 #  * Test handling of areas on posts
 #  * Test the show_data_on_error context manager
 #  * Test that objects that have disappeared are removed (not yet implemented)
+
+
+@contextmanager
+def capture_output():
+    # Suggested here: http://stackoverflow.com/a/17981937/223092
+    new_out, new_err = six.StringIO(), six.StringIO()
+    old_out, old_err = sys.stdout, sys.stderr
+    try:
+        sys.stdout, sys.stderr = new_out, new_err
+        yield new_out, new_err
+    finally:
+        sys.stdout, sys.stderr = old_out, old_err
+
 
 class BasicImporterTests(TestCase):
 
@@ -468,16 +482,11 @@ class BasicImporterTests(TestCase):
         # With truncate='warn' the field should be truncated, but
         # print a warning to stderr:
         importer = PopItImporter(truncate='warn')
-        saved_standard_error = sys.stderr
-        try:
-            standard_error = six.StringIO()
-            sys.stderr = standard_error
+        with capture_output() as (out, err):
             importer.import_from_export_json_data(data)
-            output = standard_error.getvalue().strip()
-            self.assertIn('Warning: truncating Albert', output)
-            self.assertIn('Albert to a length of 512', output)
-        finally:
-            sys.stderr = saved_standard_error
+        output = err.getvalue().strip()
+        self.assertIn('Warning: truncating Albert', output)
+        self.assertIn('Albert to a length of 512', output)
         person = models.Person.objects.get()
         max_length = person._meta.get_field('name').max_length
         truncated_name = long_name[:max_length]
