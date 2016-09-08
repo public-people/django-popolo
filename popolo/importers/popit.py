@@ -76,6 +76,14 @@ class PopItImporter(object):
             self.id_prefix = 'popit-'
         else:
             self.id_prefix = id_prefix
+        self.observers = []
+
+    def add_observer(self, observer):
+        self.observers.append(observer)
+
+    def notify_observers(self, collection, django_object, created, popolo_data):
+        for o in self.observers:
+            o.notify(collection, django_object, created, popolo_data)
 
     def get_popolo_model_class(self, model_name):
         """A default implementation for getting the Popolo model class"""
@@ -272,6 +280,7 @@ class PopItImporter(object):
             org_data.get('other_names', []),
             result
         )
+        self.notify_observers('organization', result, existing is None, org_data)
         return org_data['id'], result
 
     def update_post(self, post_data, area, org_id_to_django_object):
@@ -313,6 +322,7 @@ class PopItImporter(object):
             post_data.get('sources', []),
             result
         )
+        self.notify_observers('post', result, existing is None, post_data)
         return post_data['id'], result
 
     def update_person(self, person_data):
@@ -385,6 +395,7 @@ class PopItImporter(object):
             person_data.get('sources', []),
             result
         )
+        self.notify_observers('person', result, existing is None, person_data)
         return person_data['id'], result
 
     def update_membership(
@@ -477,6 +488,7 @@ class PopItImporter(object):
             membership_data.get('sources', []),
             result
         )
+        self.notify_observers('membership', result, existing is None, membership_data)
         return membership_data['id'], result
 
     def update_area(self, area_data):
@@ -512,6 +524,7 @@ class PopItImporter(object):
             area_data.get('sources', []),
             result
         )
+        self.notify_observers('area', result, existing is None, area_data)
         return area_data['id'], result
 
     def create_identifier(self, popit_collection, popit_id, django_object):
