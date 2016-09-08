@@ -352,3 +352,57 @@ class BasicImporterTests(TestCase):
                 )
             ]
         )
+
+    def test_related_objects_for_person(self):
+        input_json = '''
+{
+    "persons": [
+        {
+            "id": "a1b2",
+            "name": "Alice",
+            "identifiers": [
+                {
+                    "identifier": "123456789",
+                    "scheme": "yournextmp-candidate"
+                }
+            ],
+            "contact_details": [
+                {
+                    "contact_type": "twitter",
+                    "label": "",
+                    "note": "",
+                    "value": "sometwitterusernameorother"
+                }
+
+            ],
+            "links": [
+                {
+                    "note": "homepage",
+                    "url": "http://example.com/alice"
+                }
+            ]
+        }
+    ]
+}
+'''
+        data = json.loads(input_json)
+        importer = PopItImporter()
+        importer.import_from_export_json_data(data)
+        self.assertEqual(models.Person.objects.count(), 1)
+        person = models.Person.objects.get()
+        self.assertEqual(person.name, "Alice")
+        self.assertEqual(person.identifiers.count(), 2)
+        self.assertEqual(
+            person.identifiers.get(scheme='popit-person').identifier,
+            "a1b2")
+        self.assertEqual(
+            person.identifiers.get(scheme='yournextmp-candidate').identifier,
+            "123456789")
+        self.assertEqual(person.contact_details.count(), 1)
+        contact_detail = person.contact_details.get()
+        self.assertEqual(contact_detail.contact_type, 'twitter')
+        self.assertEqual(contact_detail.value, 'sometwitterusernameorother')
+        self.assertEqual(person.links.count(), 1)
+        link = person.links.get()
+        self.assertEqual(link.note, 'homepage')
+        self.assertEqual(link.url, 'http://example.com/alice')
