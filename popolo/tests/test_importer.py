@@ -3,7 +3,7 @@ import json
 from django.test import TestCase
 
 from popolo.importers.popit import PopItImporter
-from popolo.models import Membership, Organization, Person
+from popolo import models
 
 # There are some very basic tests here.  For when there is time, the
 # following things could be added or improved:
@@ -50,8 +50,8 @@ class BasicImporterTests(TestCase):
         data = json.loads(input_json)
         importer = PopItImporter()
         importer.import_from_export_json_data(data)
-        self.assertEqual(Person.objects.count(), 1)
-        person = Person.objects.get()
+        self.assertEqual(models.Person.objects.count(), 1)
+        person = models.Person.objects.get()
         self.assertEqual(person.name, "Alice")
         self.assertEqual(
             person.identifiers.get(scheme='popit-person').identifier,
@@ -84,18 +84,18 @@ class BasicImporterTests(TestCase):
         data = json.loads(input_json)
         importer = PopItImporter()
         importer.import_from_export_json_data(data)
-        self.assertEqual(Membership.objects.count(), 1)
-        self.assertEqual(Person.objects.count(), 1)
-        self.assertEqual(Organization.objects.count(), 1)
-        person = Person.objects.get()
+        self.assertEqual(models.Membership.objects.count(), 1)
+        self.assertEqual(models.Person.objects.count(), 1)
+        self.assertEqual(models.Organization.objects.count(), 1)
+        person = models.Person.objects.get()
         self.assertEqual(person.name, "Alice")
-        organization = Organization.objects.get()
+        organization = models.Organization.objects.get()
         self.assertEqual(organization.name, "House of Commons")
         self.assertEqual(
             organization.identifiers.get(scheme='popit-organization').identifier,
             "commons"
         )
-        membership = Membership.objects.get()
+        membership = models.Membership.objects.get()
         self.assertEqual(membership.person, person)
         self.assertEqual(membership.organization, organization)
 
@@ -126,18 +126,18 @@ class BasicImporterTests(TestCase):
         data = json.loads(input_json)
         importer = PopItImporter()
         importer.import_from_export_json_data(data)
-        self.assertEqual(Membership.objects.count(), 1)
-        self.assertEqual(Person.objects.count(), 1)
-        self.assertEqual(Organization.objects.count(), 1)
-        person = Person.objects.get()
+        self.assertEqual(models.Membership.objects.count(), 1)
+        self.assertEqual(models.Person.objects.count(), 1)
+        self.assertEqual(models.Organization.objects.count(), 1)
+        person = models.Person.objects.get()
         self.assertEqual(person.name, "Alice")
-        organization = Organization.objects.get()
+        organization = models.Organization.objects.get()
         self.assertEqual(organization.name, "House of Commons")
         self.assertEqual(
             organization.identifiers.get(scheme='popit-organization').identifier,
             "commons"
         )
-        membership = Membership.objects.get()
+        membership = models.Membership.objects.get()
         self.assertEqual(membership.person, person)
         self.assertEqual(membership.organization, organization)
 
@@ -163,10 +163,10 @@ class BasicImporterTests(TestCase):
         data = json.loads(input_json)
         importer = PopItImporter(id_prefix='popolo:')
         importer.import_from_export_json_data(data)
-        self.assertEqual(Person.objects.count(), 1)
-        self.assertEqual(Organization.objects.count(), 1)
-        person = Person.objects.get()
-        organization = Organization.objects.get()
+        self.assertEqual(models.Person.objects.count(), 1)
+        self.assertEqual(models.Organization.objects.count(), 1)
+        person = models.Person.objects.get()
+        organization = models.Organization.objects.get()
         person_identifier = person.identifiers.get()
         organization_identifier = organization.identifiers.get()
         self.assertEqual(person_identifier.scheme, 'popolo:person')
@@ -175,7 +175,7 @@ class BasicImporterTests(TestCase):
         self.assertEqual(organization_identifier.identifier, 'commons')
 
     def test_creates_new_person_if_not_found(self):
-        existing_person = Person.objects.create(name='Algernon')
+        existing_person = models.Person.objects.create(name='Algernon')
         input_json = '''
 {
     "persons": [
@@ -189,14 +189,14 @@ class BasicImporterTests(TestCase):
         data = json.loads(input_json)
         importer = PopItImporter()
         importer.import_from_export_json_data(data)
-        self.assertEqual(Person.objects.count(), 2)
-        new_person = Person.objects.exclude(pk=existing_person.id).get()
+        self.assertEqual(models.Person.objects.count(), 2)
+        new_person = models.Person.objects.exclude(pk=existing_person.id).get()
         new_person_identifier = new_person.identifiers.get()
         self.assertEqual(new_person_identifier.scheme, 'popit-person')
         self.assertEqual(new_person_identifier.identifier, 'a1b2')
 
     def test_updates_person_if_found(self):
-        existing_person = Person.objects.create(name='Algernon')
+        existing_person = models.Person.objects.create(name='Algernon')
         existing_person.identifiers.create(
             scheme='popolo:person',
             identifier="a1b2"
@@ -214,7 +214,7 @@ class BasicImporterTests(TestCase):
         data = json.loads(input_json)
         importer = PopItImporter(id_prefix='popolo:')
         importer.import_from_export_json_data(data)
-        self.assertEqual(Person.objects.count(), 1)
+        self.assertEqual(models.Person.objects.count(), 1)
         # Reget the person from the database:
-        person = Person.objects.get(pk=existing_person.id)
+        person = models.Person.objects.get(pk=existing_person.id)
         self.assertEqual(person.name, 'Alice')
