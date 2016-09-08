@@ -19,4 +19,6 @@ install:
   - "pip install -r tests_requirements.txt"
   - "python setup.py install"
 script: 
-  - "python runtests.py"
+  - "coverage run --source=popolo runtests.py"
+after_script:
+  - coveralls --verbose
