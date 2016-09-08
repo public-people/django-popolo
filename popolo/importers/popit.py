@@ -346,7 +346,7 @@ class PopItImporter(object):
         result.death_date = person_data.get('death_date') or ''
         result.summary = person_data.get('summary') or ''
         result.biography = person_data.get('biography') or ''
-        result.national_identitiy = person_data.get('national_identity') or None
+        result.national_identity = person_data.get('national_identity') or None
         result.image = person_data.get('image') or None
         result.save()
         # Create an identifier with the PopIt ID:
