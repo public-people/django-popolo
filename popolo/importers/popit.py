@@ -4,6 +4,8 @@ from contextlib import contextmanager
 import json
 import sys
 
+from django.utils.six import text_type
+
 from django.apps import apps
 
 NEW_COLLECTIONS = ('organization', 'post', 'person', 'membership', 'area')
@@ -71,11 +73,18 @@ class PopItImporter(object):
 
     """
 
-    def __init__(self, id_prefix=None):
+    TRUNCATE_OPTIONS = set(['yes', 'warn', 'exception'])
+
+    def __init__(self, id_prefix=None, truncate='exception'):
         if id_prefix is None:
             self.id_prefix = 'popit-'
         else:
             self.id_prefix = id_prefix
+        if truncate not in PopItImporter.TRUNCATE_OPTIONS:
+            msg = "Unknown option for truncate '{0}'; it must be one of: {1}"
+            raise ValueError(msg.format(
+                truncate, PopItImporter.TRUNCATE_OPTIONS))
+        self.truncate = truncate
         self.observers = []
 
     def add_observer(self, observer):
@@ -91,6 +100,19 @@ class PopItImporter(object):
 
     def get_model_class(self, app_label, model_name):
         return apps.get_model(app_label, model_name)
+
+    def set(self, django_object, field_name, value):
+        max_length = django_object._meta.get_field(field_name).max_length
+        # If there's no max_length on the field, just set the value
+        if max_length is not None:
+            # If an exception is wanted, we just try setting the value as normal
+            if self.truncate != 'exception':
+                if value:
+                    if self.truncate == 'warn' and len(value) > max_length:
+                        msg = "Warning: truncating {0} to a length of {1}"
+                        print(msg.format(value, max_length), file=sys.stderr)
+                    value = value[:max_length]
+        setattr(django_object, field_name, value)
 
     def import_from_export_json_data(self, data):
         """Update or create django-popolo models from a PopIt export
@@ -147,7 +169,7 @@ class PopItImporter(object):
                 parent_id = org_data.get('parent_id')
                 if parent_id:
                     org_parent = org_id_to_django_object[parent_id]
-                    org.parent = org_parent
+                    self.set(org, 'parent', org_parent)
                     org.save()
         # Create all posts (dependent on organizations already existing)
         post_id_to_django_object = {}
@@ -187,7 +209,7 @@ class PopItImporter(object):
         for area_id, parent_area_id in area_id_to_parent_area_id.items():
             area = area_id_to_django_object[area_id]
             parent_area = area_id_to_django_object[parent_area_id]
-            area.parent = parent_area
+            self.set(area, 'parent', parent_area)
             area.save()
 
     def import_from_export_json(self, json_filename):
@@ -227,12 +249,12 @@ class PopItImporter(object):
             result = Organization()
         else:
             result = existing
-        result.name = org_data['name']
-        result.classification = org_data.get('classification', '')
-        result.dissolution_date = org_data.get('dissolution_date', '')
-        result.founding_date = org_data.get('founding_date', '')
-        result.image = org_data.get('image') or None
-        result.area = area
+        self.set(result, 'name', org_data['name'])
+        self.set(result, 'classification', org_data.get('classification', ''))
+        self.set(result, 'dissolution_date', org_data.get('dissolution_date', ''))
+        self.set(result, 'founding_date', org_data.get('founding_date', ''))
+        self.set(result, 'image', org_data.get('image') or None)
+        self.set(result, 'area', area)
         result.save()
         # Create an identifier with the PopIt ID:
         if not existing:
@@ -290,10 +312,10 @@ class PopItImporter(object):
             result = Post()
         else:
             result = existing
-        result.label = post_data['label']
-        result.role = post_data['role']
-        result.organization = org_id_to_django_object[post_data['organization_id']]
-        result.area = area
+        self.set(result, 'label', post_data['label'])
+        self.set(result, 'role', post_data['role'])
+        self.set(result, 'organization', org_id_to_django_object[post_data['organization_id']])
+        self.set(result, 'area', area)
         result.save()
         # Create an identifier with the PopIt ID:
         if not existing:
@@ -332,22 +354,22 @@ class PopItImporter(object):
             result = Person()
         else:
             result = existing
-        result.name = person_data['name']
-        result.family_name = person_data.get('family_name') or ''
-        result.given_name = person_data.get('given_name') or ''
-        result.additional_name = person_data.get('additional_name') or ''
-        result.honorific_prefix = person_data.get('honorific_prefix') or ''
-        result.honorific_suffix = person_data.get('honorific_suffix') or ''
-        result.patronymic_name = person_data.get('patronymic_name') or ''
-        result.sort_name = person_data.get('sort_name') or ''
-        result.email = person_data.get('email') or None
-        result.gender = person_data.get('gender') or ''
-        result.birth_date = person_data.get('birth_date') or ''
-        result.death_date = person_data.get('death_date') or ''
-        result.summary = person_data.get('summary') or ''
-        result.biography = person_data.get('biography') or ''
-        result.national_identity = person_data.get('national_identity') or None
-        result.image = person_data.get('image') or None
+        self.set(result, 'name', person_data['name'])
+        self.set(result, 'family_name', person_data.get('family_name') or '')
+        self.set(result, 'given_name', person_data.get('given_name') or '')
+        self.set(result, 'additional_name', person_data.get('additional_name') or '')
+        self.set(result, 'honorific_prefix', person_data.get('honorific_prefix') or '')
+        self.set(result, 'honorific_suffix', person_data.get('honorific_suffix') or '')
+        self.set(result, 'patronymic_name', person_data.get('patronymic_name') or '')
+        self.set(result, 'sort_name', person_data.get('sort_name') or '')
+        self.set(result, 'email', person_data.get('email') or None)
+        self.set(result, 'gender', person_data.get('gender') or '')
+        self.set(result, 'birth_date', person_data.get('birth_date') or '')
+        self.set(result, 'death_date', person_data.get('death_date') or '')
+        self.set(result, 'summary', person_data.get('summary') or '')
+        self.set(result, 'biography', person_data.get('biography') or '')
+        self.set(result, 'national_identity', person_data.get('national_identity') or None)
+        self.set(result, 'image', person_data.get('image') or None)
         result.save()
         # Create an identifier with the PopIt ID:
         if not existing:
@@ -427,21 +449,21 @@ class PopItImporter(object):
             result = Membership()
         else:
             result = existing
-        result.label = membership_data.get('label') or ''
-        result.role = membership_data.get('role') or ''
-        result.person = person_id_to_django_object[membership_data['person_id']]
+        self.set(result, 'label', membership_data.get('label') or '')
+        self.set(result, 'role', membership_data.get('role') or '')
+        self.set(result, 'person', person_id_to_django_object[membership_data['person_id']])
         organization_id = membership_data.get('organization_id')
         if organization_id:
-            result.organization = org_id_to_django_object[organization_id]
+            self.set(result, 'organization', org_id_to_django_object[organization_id])
         on_behalf_of_id = membership_data.get('on_behalf_of_id')
         if on_behalf_of_id:
-            result.on_behalf_of = org_id_to_django_object[on_behalf_of_id]
+            self.set(result, 'on_behalf_of', org_id_to_django_object[on_behalf_of_id])
         post_id = membership_data.get('post_id')
         if post_id:
-            result.post = post_id_to_django_object[post_id]
-        result.area = area
-        result.start_date = membership_data.get('start_date', '')
-        result.end_date = membership_data.get('end_date', '')
+            self.set(result, 'post', post_id_to_django_object[post_id])
+        self.set(result, 'area', area)
+        self.set(result, 'start_date', membership_data.get('start_date', ''))
+        self.set(result, 'end_date', membership_data.get('end_date', ''))
         if 'legislative_period_id' in membership_data:
             # Strictly speaking there may be cases where it would not
             # be correct to use the leglislative period's start and
@@ -455,9 +477,9 @@ class PopItImporter(object):
             # date.
             period_data = self.events[membership_data['legislative_period_id']]
             if not result.start_date:
-                result.start_date = period_data.get('start_date', '')
+                self.set(result, 'start_date', period_data.get('start_date', ''))
             if not result.end_date:
-                result.end_date = period_data.get('end_date', '')
+                self.set(result, 'end_date', period_data.get('end_date', ''))
 
         result.save()
         # Create an identifier with the PopIt ID:
@@ -498,11 +520,11 @@ class PopItImporter(object):
             result = Area()
         else:
             result = existing
-        result.name = area_data.get('name') or ''
-        result.identifier = area_data.get('identifier') or ''
-        result.classification = area_data.get('classification') or ''
-        result.geom = area_data.get('geom') or None
-        result.inhabitants = area_data.get('inhabitants')
+        self.set(result, 'name', area_data.get('name') or '')
+        self.set(result, 'identifier', area_data.get('identifier') or '')
+        self.set(result, 'classification', area_data.get('classification') or '')
+        self.set(result, 'geom', area_data.get('geom') or None)
+        self.set(result, 'inhabitants', area_data.get('inhabitants'))
         result.save()
         # Create an identifier with the PopIt ID:
         if not existing:

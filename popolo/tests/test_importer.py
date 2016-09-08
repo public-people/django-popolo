@@ -1,7 +1,10 @@
 import json
+import sys
 
 from mock import Mock, call
+from django.utils import six
 
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from popolo.importers.popit import PopItImporter
@@ -406,3 +409,76 @@ class BasicImporterTests(TestCase):
         link = person.links.get()
         self.assertEqual(link.note, 'homepage')
         self.assertEqual(link.url, 'http://example.com/alice')
+
+    def test_truncation_none(self):
+        long_name = ('Albert ' * 100).strip()
+        input_json = '''
+{{
+    "persons": [
+        {{
+            "id": "a1b2",
+            "name": "{0}"
+        }}
+    ]
+}}
+'''.format(long_name)
+        data = json.loads(input_json)
+        # With truncate='yes', there should be no exception:
+        importer = PopItImporter(truncate='yes')
+        importer.import_from_export_json_data(data)
+        person = models.Person.objects.get()
+        max_length = person._meta.get_field('name').max_length
+        truncated_name = long_name[:max_length]
+        self.assertEqual(person.name, truncated_name)
+
+    def test_truncation_exception(self):
+        long_name = ('Albert ' * 100).strip()
+        input_json = '''
+{{
+    "persons": [
+        {{
+            "id": "a1b2",
+            "name": "{0}"
+        }}
+    ]
+}}
+'''.format(long_name)
+        data = json.loads(input_json)
+        # With the default, truncate='exception', there should be an
+        # exception raised:
+        importer = PopItImporter()
+        with self.assertRaisesRegexp(
+                ValidationError,
+                'Ensure this value has at most 512 characters'):
+            importer.import_from_export_json_data(data)
+
+    def test_truncation_warn(self):
+        long_name = ('Albert ' * 100).strip()
+        input_json = '''
+{{
+    "persons": [
+        {{
+            "id": "a1b2",
+            "name": "{0}"
+        }}
+    ]
+}}
+'''.format(long_name)
+        data = json.loads(input_json)
+        # With truncate='warn' the field should be truncated, but
+        # print a warning to stderr:
+        importer = PopItImporter(truncate='warn')
+        saved_standard_error = sys.stderr
+        try:
+            standard_error = six.StringIO()
+            sys.stderr = standard_error
+            importer.import_from_export_json_data(data)
+            output = standard_error.getvalue().strip()
+            self.assertIn('Warning: truncating Albert', output)
+            self.assertIn('Albert to a length of 512', output)
+        finally:
+            sys.stderr = saved_standard_error
+        person = models.Person.objects.get()
+        max_length = person._meta.get_field('name').max_length
+        truncated_name = long_name[:max_length]
+        self.assertEqual(person.name, truncated_name)
