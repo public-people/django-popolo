@@ -491,3 +491,68 @@ class BasicImporterTests(TestCase):
         max_length = person._meta.get_field('name').max_length
         truncated_name = long_name[:max_length]
         self.assertEqual(person.name, truncated_name)
+
+    def test_dont_recreate_related_objects(self):
+        input_json = '''
+{
+    "persons": [
+        {
+            "id": "a1b2",
+            "name": "Alice",
+            "identifiers": [
+                {
+                    "identifier": "123456789",
+                    "scheme": "yournextmp-candidate"
+                }
+            ],
+            "contact_details": [
+                {
+                    "contact_type": "twitter",
+                    "label": "",
+                    "note": "",
+                    "value": "sometwitterusernameorother"
+                }
+
+            ],
+            "links": [
+                {
+                    "note": "homepage",
+                    "url": "http://example.com/alice"
+                }
+            ]
+        }
+    ]
+}
+'''
+        data = json.loads(input_json)
+        importer = PopItImporter()
+        importer.import_from_export_json_data(data)
+        self.assertEqual(models.Person.objects.count(), 1)
+        original_person = models.Person.objects.get()
+        self.assertEqual(original_person.name, "Alice")
+        self.assertEqual(original_person.identifiers.count(), 2)
+        original_identifier_a = original_person.identifiers.get(scheme='popit-person')
+        original_identifier_b = original_person.identifiers.get(scheme='yournextmp-candidate')
+        self.assertEqual(original_identifier_a.identifier, "a1b2")
+        self.assertEqual(original_identifier_b.identifier, "123456789")
+        self.assertEqual(original_person.contact_details.count(), 1)
+        original_contact_detail = original_person.contact_details.get()
+
+        # Now try importing again, and refetch those objects:
+        importer = PopItImporter()
+        importer.import_from_export_json_data(data)
+        self.assertEqual(models.Person.objects.count(), 1)
+        new_person = models.Person.objects.get()
+        self.assertEqual(new_person.name, "Alice")
+        self.assertEqual(new_person.identifiers.count(), 2)
+        new_identifier_a = new_person.identifiers.get(scheme='popit-person')
+        new_identifier_b = new_person.identifiers.get(scheme='yournextmp-candidate')
+        self.assertEqual(new_identifier_a.identifier, "a1b2")
+        self.assertEqual(new_identifier_b.identifier, "123456789")
+        self.assertEqual(new_person.contact_details.count(), 1)
+        new_contact_detail = new_person.contact_details.get()
+        # Now check that these objects haven't changed ID:
+        self.assertEqual(original_person.id, new_person.id)
+        self.assertEqual(original_identifier_a.id, new_identifier_a.id)
+        self.assertEqual(original_identifier_b.id, new_identifier_b.id)
+        self.assertEqual(original_contact_detail.id, new_contact_detail.id)
