@@ -556,3 +556,35 @@ class BasicImporterTests(TestCase):
         self.assertEqual(original_identifier_a.id, new_identifier_a.id)
         self.assertEqual(original_identifier_b.id, new_identifier_b.id)
         self.assertEqual(original_contact_detail.id, new_contact_detail.id)
+
+    def test_organization_with_identifiers(self):
+        input_json = '''
+{
+    "organizations": [
+        {
+            "id": "commons",
+            "name": "House of Commons",
+            "identifiers": [
+                {
+                    "scheme": "big-db-of-parliaments",
+                    "identifier": "uk-commons"
+                }
+            ]
+        }
+    ]
+}
+'''
+        data = json.loads(input_json)
+        importer = PopItImporter()
+        importer.import_from_export_json_data(data)
+        self.assertEqual(models.Organization.objects.count(), 1)
+        organization = models.Organization.objects.get()
+        self.assertEqual(organization.name, "House of Commons")
+        self.assertEqual(
+            organization.identifiers.get(scheme='popit-organization').identifier,
+            "commons"
+        )
+        self.assertEqual(
+            organization.identifiers.get(scheme='big-db-of-parliaments').identifier,
+            "uk-commons"
+        )
