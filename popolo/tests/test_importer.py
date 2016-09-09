@@ -419,6 +419,10 @@ class BasicImporterTests(TestCase):
         self.assertEqual(link.note, 'homepage')
         self.assertEqual(link.url, 'http://example.com/alice')
 
+    def test_truncation_unknown_option(self):
+        with self.assertRaises(ValueError):
+            PopItImporter(truncate='dunno')
+
     def test_truncation_none(self):
         long_name = ('Albert ' * 100).strip()
         input_json = '''
