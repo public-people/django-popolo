@@ -701,3 +701,31 @@ class BasicImporterTests(TestCase):
         child = models.Organization.objects.get(name='Cabinet Office')
         parent = models.Organization.objects.get(name='Civil Service')
         self.assertEqual(child.parent, parent)
+
+    def test_area_parent_relationship(self):
+        input_json = '''
+{
+    "areas": [
+        {
+            "id": "subarea-1",
+            "name": "Scotland",
+            "identifier": "sco",
+            "classification": "country",
+            "parent_id": "area-1"
+        },
+        {
+            "id": "area-1",
+            "name": "United Kingdom",
+            "identifier": "uk",
+            "classification": "country"
+        }
+    ]
+}
+'''
+        data = json.loads(input_json)
+        importer = PopItImporter()
+        importer.import_from_export_json_data(data)
+        self.assertEqual(models.Area.objects.count(), 2)
+        child = models.Area.objects.get(name='Scotland')
+        parent = models.Area.objects.get(name='United Kingdom')
+        self.assertEqual(child.parent, parent)

@@ -152,6 +152,9 @@ class PopoloJSONImporter(object):
         for area_data in data.get('areas', []):
             with show_data_on_error('area_data', area_data):
                 area_id, area = self.update_area(area_data)
+                area_parent_id = area_data.get('parent_id')
+                if area_parent_id:
+                    area_id_to_parent_area_id[area_id] = area_parent_id
                 area_id_to_django_object[area_id] = area
 
         # Do one pass through the organizations:
