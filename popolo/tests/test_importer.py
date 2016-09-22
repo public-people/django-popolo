@@ -592,3 +592,64 @@ class BasicImporterTests(TestCase):
             organization.identifiers.get(scheme='big-db-of-parliaments').identifier,
             "uk-commons"
         )
+
+    def test_organisation_with_inline_area(self):
+        input_json = '''
+{
+    "organizations": [
+        {
+            "id": "commons",
+            "name": "House of Commons",
+            "area": {
+                "id": "area-1",
+                "name": "The United Kingdom of Great Britain and Northern Ireland",
+                "identifier": "uk",
+                "classification": "country"
+            }
+        }
+    ]
+}
+'''
+        data = json.loads(input_json)
+        importer = PopItImporter()
+        importer.import_from_export_json_data(data)
+        self.assertEqual(models.Organization.objects.count(), 1)
+        self.assertEqual(models.Area.objects.count(), 1)
+        area = models.Area.objects.get()
+        self.assertEqual(
+            area.name,
+            'The United Kingdom of Great Britain and Northern Ireland')
+        self.assertEqual(area.identifier, 'uk')
+        self.assertEqual(area.classification, 'country')
+
+    def test_organisation_with_external_area(self):
+        input_json = '''
+{
+    "organizations": [
+        {
+            "id": "commons",
+            "name": "House of Commons",
+            "area_id": "area-1"
+        }
+    ],
+    "areas": [
+        {
+            "id": "area-1",
+            "name": "The United Kingdom of Great Britain and Northern Ireland",
+            "identifier": "uk",
+            "classification": "country"
+        }
+    ]
+}
+'''
+        data = json.loads(input_json)
+        importer = PopItImporter()
+        importer.import_from_export_json_data(data)
+        self.assertEqual(models.Organization.objects.count(), 1)
+        self.assertEqual(models.Area.objects.count(), 1)
+        area = models.Area.objects.get()
+        self.assertEqual(
+            area.name,
+            'The United Kingdom of Great Britain and Northern Ireland')
+        self.assertEqual(area.identifier, 'uk')
+        self.assertEqual(area.classification, 'country')
