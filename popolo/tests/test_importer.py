@@ -653,3 +653,27 @@ class BasicImporterTests(TestCase):
             'The United Kingdom of Great Britain and Northern Ireland')
         self.assertEqual(area.identifier, 'uk')
         self.assertEqual(area.classification, 'country')
+
+    def test_exception_from_inline_area_missing_id(self):
+        input_json = '''
+{
+    "organizations": [
+        {
+            "id": "commons",
+            "name": "House of Commons",
+            "area": {
+                "name": "The United Kingdom of Great Britain and Northern Ireland",
+                "identifier": "uk",
+                "classification": "country"
+            }
+        }
+    ]
+}
+'''
+        data = json.loads(input_json)
+        importer = PopItImporter()
+        with capture_output() as (out, err):
+            with self.assertRaisesRegexp(
+                    ValueError,
+                    'Found inline area data, but with no "id" attribute'):
+                importer.import_from_export_json_data(data)

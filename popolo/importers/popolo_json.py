@@ -131,7 +131,8 @@ class PopoloJSONImporter(object):
             area = None
             if area_data:
                 if not area_data.get('id'):
-                    return None
+                    msg = 'Found inline area data, but with no "id" attribute'
+                    raise ValueError(msg)
                 with show_data_on_error('area_data', area_data):
                     area_id, area = self.update_area(area_data)
                     area_id_to_django_object[area_id] = area
