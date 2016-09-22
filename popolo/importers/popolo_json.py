@@ -621,14 +621,14 @@ class PopoloJSONImporter(object):
 
     def make_link_dict(self, link_data):
         return {
-            'note': link_data['note'],
+            'note': link_data.get('note') or '',
             'url': link_data['url'],
         }
 
     def make_source_dict(self, source_data):
         return {
             'url': source_data['url'],
-            'note': source_data['note'],
+            'note': source_data.get('note') or '',
         }
 
     def make_other_name_dict(self, other_name_data):

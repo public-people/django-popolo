@@ -732,6 +732,49 @@ class BasicImporterTests(TestCase):
         parent = models.Area.objects.get(name='United Kingdom')
         self.assertEqual(child.parent, parent)
 
+    def test_all_top_level_optional(self):
+        # This just check that you don't get an exception when
+        # importing empty Popolo JSON.
+        input_json = '{}'
+        data = json.loads(input_json)
+        importer = PopItImporter()
+        importer.import_from_export_json_data(data)
+
+    def test_link_and_source_without_a_note(self):
+        input_json = '''
+{
+    "persons": [
+        {
+            "id": "a1b2",
+            "name": "Alice",
+            "sources": [
+               {
+                   "url": "http://example.org/source-of-alice-data"
+               }
+            ],
+            "links": [
+               {
+                   "url": "http://example.org/a-link-without-a-note"
+               }
+            ]
+        }
+    ]
+}
+'''
+        data = json.loads(input_json)
+        importer = PopItImporter()
+        importer.import_from_export_json_data(data)
+        self.assertEqual(models.Person.objects.count(), 1)
+        person = models.Person.objects.get()
+        self.assertEqual(person.name, "Alice")
+        self.assertEqual(
+            person.sources.get().url,
+            "http://example.org/source-of-alice-data")
+        self.assertEqual(
+            person.links.get().url,
+            "http://example.org/a-link-without-a-note")
+
+
 class LegislativePeriodMembershipTests(TestCase):
     """Tests for a special case to provide defaults for membership dates"""
 
