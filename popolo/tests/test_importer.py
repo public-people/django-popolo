@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from contextlib import contextmanager
 import json
 import sys
@@ -729,3 +731,162 @@ class BasicImporterTests(TestCase):
         child = models.Area.objects.get(name='Scotland')
         parent = models.Area.objects.get(name='United Kingdom')
         self.assertEqual(child.parent, parent)
+
+class LegislativePeriodMembershipTests(TestCase):
+    """Tests for a special case to provide defaults for membership dates"""
+
+    def setUp(self):
+        # This Input data extracted from:
+        # https://cdn.rawgit.com/everypolitician/everypolitician-data/a46ef721903ad86a07af2abbebf469015e9b4367/data/UK/Commons/ep-popolo-v1.0.json
+        # This is quite a useful sample of real data so we should
+        # reuse this to test the rest of it is parsed properly (FIXME).
+        self.input_json = u'''
+{
+    "persons": [
+        {
+            "birth_date": "1955-04-09",
+            "gender": "male",
+            "given_name": "Eric",
+            "id": "0588816f-94b5-4397-88f6-f3fdca0f94f0",
+            "identifiers": [
+                {
+                    "identifier": "Commons/member/386",
+                    "scheme": "parliamentdotuk"
+                }
+            ],
+            "links": [
+                {
+                    "note": "Wikipedia (en)",
+                    "url": "https://en.wikipedia.org/wiki/Eric_Illsley"
+                }
+            ],
+            "name": "Eric Illsley",
+            "other_names": [
+                {
+                    "lang": "ja",
+                    "name": "エリック・イルズリー",
+                    "note": "multilingual"
+                }
+            ]
+        },
+        {
+            "birth_date": "1971-05-23",
+            "contact_details": [
+                {
+                    "type": "email",
+                    "value": "robertsonbj@parliament.uk"
+                },
+                {
+                    "type": "email",
+                    "value": "george.osborne.mp@parliament.uk"
+                },
+                {
+                    "type": "phone",
+                    "value": "020 7219 8214"
+                },
+                {
+                    "type": "twitter",
+                    "value": "George_Osborne"
+                }
+            ],
+            "email": "robertsonbj@parliament.uk",
+            "gender": "male",
+            "given_name": "George",
+            "id": "008ca7b1-fd32-420f-b710-d49fe8e34b05",
+            "name": "George Osborne",
+            "sort_name": "Osborne, Mr George"
+        }
+    ],
+    "memberships": [
+        {
+            "area_id": "uk.org.publicwhip/cons/22",
+            "end_date": "2011-02-08",
+            "legislative_period_id": "term/55",
+            "on_behalf_of_id": "labour",
+            "organization_id": "8bbf6031-aa59-4b0a-80b2-1cdc81e4047d",
+            "person_id": "0588816f-94b5-4397-88f6-f3fdca0f94f0",
+            "role": "member"
+        },
+        {
+            "area_id": "uk.org.publicwhip/cons/572",
+            "legislative_period_id": "term/56",
+            "on_behalf_of_id": "conservative",
+            "organization_id": "8bbf6031-aa59-4b0a-80b2-1cdc81e4047d",
+            "person_id": "008ca7b1-fd32-420f-b710-d49fe8e34b05",
+            "role": "member"
+        }
+    ],
+    "events": [
+        {
+            "classification": "legislative period",
+            "end_date": "2015-03-30",
+            "id": "term/55",
+            "name": "55th Parliament of the United Kingdom",
+            "organization_id": "8bbf6031-aa59-4b0a-80b2-1cdc81e4047d",
+            "start_date": "2010-05-06",
+            "wikidata": "Q21084472"
+        },
+        {
+            "classification": "legislative period",
+            "id": "term/56",
+            "name": "56th Parliament of the United Kingdom",
+            "organization_id": "8bbf6031-aa59-4b0a-80b2-1cdc81e4047d",
+            "start_date": "2015-05-08",
+            "wikidata": "Q21084473"
+        }
+    ],
+    "organizations": [
+        {
+            "classification": "legislature",
+            "id": "8bbf6031-aa59-4b0a-80b2-1cdc81e4047d",
+            "identifiers": [
+                {
+                    "identifier": "Q11005",
+                    "scheme": "wikidata"
+                }
+            ],
+            "name": "House of Commons",
+            "seats": 650
+        },
+        {
+            "classification": "party",
+            "id": "labour",
+            "identifiers": [
+                {
+                    "identifier": "Q9630",
+                    "scheme": "wikidata"
+                }
+            ],
+            "name": "Labour"
+        },
+        {
+            "classification": "party",
+            "id": "conservative",
+            "identifiers": [
+                {
+                    "identifier": "Q9626",
+                    "scheme": "wikidata"
+                }
+            ],
+            "links": [
+                {
+                    "note": "website",
+                    "url": "http://www.conservatives.com"
+                }
+            ],
+            "name": "Conservative"
+        }
+    ]
+}
+        '''
+
+    def test_membership_no_dates_but_some_in_legislative_period(self):
+        data = json.loads(self.input_json)
+        importer = PopItImporter()
+        importer.import_from_export_json_data(data)
+        self.assertEqual(models.Membership.objects.count(), 2)
+        earlier, later = models.Membership.objects.order_by('start_date')
+        self.assertEqual(earlier.start_date, '2010-05-06')
+        self.assertEqual(earlier.end_date, '2011-02-08')
+        self.assertEqual(later.start_date, '2015-05-08')
+        self.assertEqual(later.end_date, '')
