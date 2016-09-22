@@ -677,3 +677,27 @@ class BasicImporterTests(TestCase):
                     ValueError,
                     'Found inline area data, but with no "id" attribute'):
                 importer.import_from_export_json_data(data)
+
+    def test_organization_parent_relationship(self):
+        input_json = '''
+{
+    "organizations": [
+        {
+            "id": "co",
+            "name": "Cabinet Office",
+            "parent_id": "cs"
+        },
+        {
+            "id": "cs",
+            "name": "Civil Service"
+        }
+    ]
+}
+'''
+        data = json.loads(input_json)
+        importer = PopItImporter()
+        importer.import_from_export_json_data(data)
+        self.assertEqual(models.Organization.objects.count(), 2)
+        child = models.Organization.objects.get(name='Cabinet Office')
+        parent = models.Organization.objects.get(name='Civil Service')
+        self.assertEqual(child.parent, parent)
