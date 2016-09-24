@@ -1188,7 +1188,7 @@ class PopItSubclassTests(TestCase):
         overlong_summary = 'abcdefgh' * 192
         # Make sure the URL exceeds 200 characters
         overlong_url = 'http://www.parliament.uk/business/commons/#'
-        overlong_url += '00' * 100
+        overlong_url += '0123' * 100
         input_json = '''
 {{
     "persons": [
@@ -1247,10 +1247,7 @@ class PopItSubclassTests(TestCase):
         link = models.Link.objects.get()
         self.assertEqual(link.content_object, models.Organization.objects.get())
         self.assertEqual(link.note, 'website')
-        self.assertEqual(len(link.url), 200)
-        self.assertEqual(
-            link.url,
-            'http://www.parliament.uk/business/commons/#00000000000000000000' \
-            '000000000000000000000000000000000000000000000000000000000000000' \
-            '000000000000000000000000000000000000000000000000000000000000000' \
-            '00000000000')
+        self.assertEqual(len(link.url), 350)
+        self.assertTrue(
+            link.url.startswith(
+                'http://www.parliament.uk/business/commons/#01230123'))
