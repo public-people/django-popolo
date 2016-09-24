@@ -10,6 +10,7 @@ from mock import Mock, call
 from django.utils import six
 
 from django.core.exceptions import ValidationError
+from django.core.management import call_command
 from django.test import TestCase
 
 from popolo.importers.popit import PopItImporter
@@ -1143,3 +1144,82 @@ class LegislativePeriodMembershipTests(TestCase):
         self.assertEqual(earlier.end_date, '2011-02-08')
         self.assertEqual(later.start_date, '2015-05-08')
         self.assertEqual(later.end_date, '')
+
+
+class PopItSubclassTests(TestCase):
+
+    def test_error_on_wrong_arguments(self):
+        with self.assertRaises(Exception):
+            call_command('popolo_create_from_popit')
+
+    def test_special_cases_for_popit(self):
+        # 1536 characters long; longer than the 1024 max_length
+        overlong_summary = 'abcdefgh' * 192
+        # Make sure the URL exceeds 200 characters
+        overlong_url = 'http://www.parliament.uk/business/commons/#'
+        overlong_url += '00' * 100
+        input_json = '''
+{{
+    "persons": [
+        {{
+            "id": "a1b2",
+            "name": "Alice",
+            "email": " alice @ example.org  ",
+            "summary": "{}",
+            "contact_details": [
+                {{
+                    "type": "official-work-email",
+                    "value": "ceo@company.example.org"
+                }}
+            ]
+        }}
+    ],
+    "organizations": [
+        {{
+            "id": "commons",
+            "name": "House of Commons",
+            "links": [
+                {{
+                    "note": "website",
+                    "url": "{}"
+                }}
+            ]
+        }}
+    ],
+    "memberships": [
+        {{
+            "person_id": "a1b2",
+            "organization_id": "commons"
+        }}
+    ]
+}}
+'''.format(overlong_summary, overlong_url)
+        try:
+            with NamedTemporaryFile('w', delete=False, suffix='.json') as ntf:
+                ntf.write(input_json)
+            call_command('popolo_create_from_popit', ntf.name)
+        finally:
+            os.remove(ntf.name)
+        # Now check everything was created:
+        self.assertEqual(models.Membership.objects.count(), 1)
+        self.assertEqual(models.Person.objects.count(), 1)
+        self.assertEqual(models.Organization.objects.count(), 1)
+        self.assertEqual(models.Identifier.objects.count(), 3)
+        self.assertEqual(models.ContactDetail.objects.count(), 1)
+        # Check that the bad properties have been fixed as expected:
+        person = models.Person.objects.get()
+        self.assertEqual(person.email, 'alice@example.org')
+        self.assertEqual(len(person.summary), 1024)
+        contact = models.ContactDetail.objects.get()
+        self.assertEqual(contact.contact_type, 'official-wor')
+        self.assertEqual(contact.value, 'ceo@company.example.org')
+        link = models.Link.objects.get()
+        self.assertEqual(link.content_object, models.Organization.objects.get())
+        self.assertEqual(link.note, 'website')
+        self.assertEqual(len(link.url), 200)
+        self.assertEqual(
+            link.url,
+            'http://www.parliament.uk/business/commons/#00000000000000000000' \
+            '000000000000000000000000000000000000000000000000000000000000000' \
+            '000000000000000000000000000000000000000000000000000000000000000' \
+            '00000000000')
