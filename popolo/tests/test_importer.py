@@ -117,7 +117,6 @@ class BasicImporterTests(TestCase):
         self.assertEqual(membership.person, person)
         self.assertEqual(membership.organization, organization)
 
-
     def test_import_from_a_file(self):
         input_json = '''
 {
@@ -721,6 +720,76 @@ class BasicImporterTests(TestCase):
             'The United Kingdom of Great Britain and Northern Ireland')
         self.assertEqual(area.identifier, 'uk')
         self.assertEqual(area.classification, 'country')
+
+    def test_post_creation(self):
+        input_json = '''
+{
+    "posts": [
+        {
+            "id": "65808",
+            "label": "Member of Parliament for Dulwich and West Norwood",
+            "role": "Member of Parliament",
+            "organization_id": "commons"
+        }
+    ],
+    "organizations": [
+        {
+            "id": "commons",
+            "name": "House of Commons"
+        }
+    ]
+}
+'''
+        data = json.loads(input_json)
+        importer = PopItImporter()
+        importer.import_from_export_json_data(data)
+        self.assertEqual(models.Post.objects.count(), 1)
+        post = models.Post.objects.get()
+        self.assertEqual(post.label, "Member of Parliament for Dulwich and West Norwood")
+        self.assertEqual(post.role, "Member of Parliament")
+        self.assertEqual(models.Organization.objects.count(), 1)
+
+    def test_post_update(self):
+        existing_org = models.Organization.objects.create(name='House of Commons')
+        existing_org.identifiers.create(
+            scheme='popit-organization', identifier='commons')
+        existing_post = models.Post.objects.create(
+            label="MP for Dulwich and West Norwood",
+            role="MP",
+            organization=existing_org
+        )
+        models.Identifier.objects.create(
+            scheme='popit-post',
+            identifier='65808',
+            content_object=existing_post,
+        )
+        # Now import JSON that updates that post:
+        input_json = '''
+{
+    "posts": [
+        {
+            "id": "65808",
+            "label": "Member of Parliament for Dulwich and West Norwood",
+            "role": "Member of Parliament",
+            "organization_id": "commons"
+        }
+    ],
+    "organizations": [
+        {
+            "id": "commons",
+            "name": "House of Commons"
+        }
+    ]
+}
+'''
+        data = json.loads(input_json)
+        importer = PopItImporter()
+        importer.import_from_export_json_data(data)
+        self.assertEqual(models.Post.objects.count(), 1)
+        post = models.Post.objects.get()
+        self.assertEqual(post.label, "Member of Parliament for Dulwich and West Norwood")
+        self.assertEqual(post.role, "Member of Parliament")
+        self.assertEqual(models.Organization.objects.count(), 1)
 
     def test_exception_from_inline_area_missing_id(self):
         input_json = '''
