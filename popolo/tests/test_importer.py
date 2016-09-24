@@ -2,7 +2,9 @@
 
 from contextlib import contextmanager
 import json
+import os
 import sys
+from tempfile import NamedTemporaryFile
 
 from mock import Mock, call
 from django.utils import six
@@ -114,6 +116,44 @@ class BasicImporterTests(TestCase):
         membership = models.Membership.objects.get()
         self.assertEqual(membership.person, person)
         self.assertEqual(membership.organization, organization)
+
+
+    def test_import_from_a_file(self):
+        input_json = '''
+{
+    "persons": [
+        {
+            "id": "a1b2",
+            "name": "Alice"
+        }
+
+    ],
+    "organizations": [
+        {
+            "id": "commons",
+            "name": "House of Commons"
+        }
+    ],
+    "memberships": [
+        {
+            "person_id": "a1b2",
+            "organization_id": "commons"
+        }
+    ]
+}
+'''
+        try:
+            with NamedTemporaryFile('w', delete=False, suffix='.json') as ntf:
+                ntf.write(input_json)
+            importer = PopItImporter()
+            importer.import_from_export_json(ntf.name)
+        finally:
+            os.remove(ntf.name)
+        # Now check everything was created:
+        self.assertEqual(models.Membership.objects.count(), 1)
+        self.assertEqual(models.Person.objects.count(), 1)
+        self.assertEqual(models.Organization.objects.count(), 1)
+        self.assertEqual(models.Identifier.objects.count(), 3)
 
     def test_person_with_inline_membership(self):
         input_json = '''
