@@ -75,6 +75,7 @@ class PopoloJSONImporter(object):
     TRUNCATE_OPTIONS = set(['yes', 'warn', 'exception'])
 
     def __init__(self, id_prefix=None, truncate='exception'):
+        super(PopoloJSONImporter, self).__init__()
         if id_prefix is None:
             self.id_prefix = 'popit-'
         else:
