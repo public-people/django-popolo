@@ -1,3 +1,3 @@
 "A Django-based implementation of the Popolo data specifications."
 
-__version__ = '0.0.6'
+__version__ = '0.0.7'

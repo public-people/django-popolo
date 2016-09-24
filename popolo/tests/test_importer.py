@@ -595,6 +595,32 @@ class BasicImporterTests(TestCase):
             "uk-commons"
         )
 
+    def test_update_existing_organization(self):
+        existing = models.Organization.objects.create(name="The Commons")
+        existing.identifiers.create(
+            scheme="popit-organization", identifier="commons")
+        input_json = '''
+{
+    "organizations": [
+        {
+            "id": "commons",
+            "name": "House of Commons"
+        }
+    ]
+}
+'''
+        data = json.loads(input_json)
+        importer = PopItImporter()
+        importer.import_from_export_json_data(data)
+        self.assertEqual(models.Organization.objects.count(), 1)
+        organization = models.Organization.objects.get()
+        self.assertEqual(existing, organization)
+        self.assertEqual(organization.name, "House of Commons")
+        self.assertEqual(
+            organization.identifiers.get(scheme='popit-organization').identifier,
+            "commons"
+        )
+
     def test_organisation_with_inline_area(self):
         input_json = '''
 {
