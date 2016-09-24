@@ -827,6 +827,24 @@ class BasicImporterTests(TestCase):
             "http://example.org/a-link-without-a-note")
 
 
+class SurprisingExceptionTests(TestCase):
+
+    def test_exception_unknown_collection_on_get_existing(self):
+        importer = PopItImporter()
+        with self.assertRaisesRegexp(
+                Exception,
+                r"Unknown collection 'not-a-collection'"):
+            importer.get_existing_django_object('not-a-collection', 'commons')
+
+    def test_exception_unknown_collection_on_create_identifier(self):
+        commons = models.Organization.objects.create(name="The Commons")
+        importer = PopItImporter()
+        with self.assertRaisesRegexp(
+                Exception,
+                r"Unknown collection 'not-a-collection'"):
+            importer.create_identifier('not-a-collection', 'commons', commons)
+
+
 class LegislativePeriodMembershipTests(TestCase):
     """Tests for a special case to provide defaults for membership dates"""
 
