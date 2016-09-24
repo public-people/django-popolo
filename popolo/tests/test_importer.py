@@ -758,14 +758,6 @@ class BasicImporterTests(TestCase):
         parent = models.Area.objects.get(name='United Kingdom')
         self.assertEqual(child.parent, parent)
 
-    def test_all_top_level_optional(self):
-        # This just check that you don't get an exception when
-        # importing empty Popolo JSON.
-        input_json = '{}'
-        data = json.loads(input_json)
-        importer = PopItImporter()
-        importer.import_from_export_json_data(data)
-
     def test_link_and_source_without_a_note(self):
         input_json = '''
 {
