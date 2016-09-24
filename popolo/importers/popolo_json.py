@@ -101,8 +101,9 @@ class PopoloJSONImporter(object):
     def get_model_class(self, app_label, model_name):
         return apps.get_model(app_label, model_name)
 
-    def set(self, django_object, field_name, value):
-        max_length = django_object._meta.get_field(field_name).max_length
+    def get_truncated(self, django_object_or_model_class, field_name, value):
+        meta = django_object_or_model_class._meta
+        max_length = meta.get_field(field_name).max_length
         # If there's no max_length on the field, just set the value
         if max_length is not None:
             # If an exception is wanted, we just try setting the value as normal
@@ -112,7 +113,12 @@ class PopoloJSONImporter(object):
                         msg = "Warning: truncating {0} to a length of {1}"
                         print(msg.format(value, max_length), file=sys.stderr)
                     value = value[:max_length]
-        setattr(django_object, field_name, value)
+        return value
+
+    def set(self, django_object, field_name, value):
+        possibly_truncated_value = self.get_truncated(
+            django_object, field_name, value)
+        setattr(django_object, field_name, possibly_truncated_value)
 
     def import_from_export_json_data(self, data):
         """Update or create django-popolo models from a PopIt export
@@ -592,6 +598,12 @@ class PopoloJSONImporter(object):
             wanted_attributes = popit_to_django_attributes_method(
                 object_data
             )
+            # We might need to truncate these in order for them to
+            # match the objects already in the database:
+            wanted_attributes = {
+                k: self.get_truncated(django_related_model, k, v)
+                for k, v in wanted_attributes.items()
+            }
             wanted_attributes['content_type_id'] = main_content_type.id
             wanted_attributes['object_id'] = django_object.id
             existing = django_related_model.objects.filter(**wanted_attributes)

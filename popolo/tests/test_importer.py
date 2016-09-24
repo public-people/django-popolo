@@ -538,6 +538,37 @@ class BasicImporterTests(TestCase):
         truncated_name = long_name[:max_length]
         self.assertEqual(person.name, truncated_name)
 
+    def test_values_in_related_objects_are_truncated(self):
+        input_json = '''
+{
+    "persons": [
+        {
+            "id": "a1b2",
+            "name": "Alice",
+            "contact_details": [
+                {
+                    "type": "official-work-email",
+                    "value": "ceo@company.example.org"
+                }
+            ]
+        }
+    ]
+}
+'''
+        data = json.loads(input_json)
+        importer = PopItImporter(truncate='yes')
+        importer.import_from_export_json_data(data)
+        cd = models.ContactDetail.objects.get()
+        self.assertEqual(cd.contact_type, 'official-wor')
+        # Also test that they can be updated without creating a
+        # duplicate. (This could happen if the implementation uses the
+        # overlong version for checking existence, but the truncated
+        # version for setting.)
+        importer.import_from_export_json_data(data)
+        self.assertEqual(models.ContactDetail.objects.count(), 1)
+        cd = models.ContactDetail.objects.get()
+        self.assertEqual(cd.contact_type, 'official-wor')
+
     def test_dont_recreate_related_objects(self):
         input_json = '''
 {
