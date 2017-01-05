@@ -85,6 +85,13 @@ class PopoloJSONImporter(object):
             raise ValueError(msg.format(
                 truncate, PopoloJSONImporter.TRUNCATE_OPTIONS))
         self.truncate = truncate
+        # By default we preserve the ID schemes used to identify
+        # previously imported data:
+        self.id_schemes_to_preserve = {
+            'person': {self.id_prefix + 'person'},
+            'organization': {self.id_prefix + 'organization'},
+            'area': {self.id_prefix + 'area'},
+        }
         self.observers = []
 
     def add_observer(self, observer):
@@ -278,7 +285,6 @@ class PopoloJSONImporter(object):
                 self.make_identifier_dict,
                 org_data['identifiers'],
                 result,
-                preserve_predicate=lambda i: i.scheme == self.id_prefix + 'organization',
             )
         # Update contact details:
         self.update_related_objects(
@@ -401,7 +407,6 @@ class PopoloJSONImporter(object):
                 self.make_identifier_dict,
                 person_data['identifiers'],
                 result,
-                preserve_predicate=lambda i: i.scheme == self.id_prefix + 'person',
             )
         # Update contact details:
         self.update_related_objects(
@@ -546,7 +551,6 @@ class PopoloJSONImporter(object):
             self.make_identifier_dict,
             area_data.get('other_identifiers', []),
             result,
-            preserve_predicate=lambda i: i.scheme == self.id_prefix + 'area',
         )
         # Update sources:
         self.update_related_objects(
@@ -573,6 +577,15 @@ class PopoloJSONImporter(object):
             identifier=popit_id,
         )
 
+    def should_preserve_related(self, django_main_model, related_object):
+        # We only have rules for preserving identifiers, so ignore
+        # other types of related object:
+        if type(related_object).__name__ == 'Identifier':
+            schemes_to_preserve = self.id_schemes_to_preserve.get(
+                django_main_model.__name__.lower(), set())
+            if related_object.scheme in schemes_to_preserve:
+                return True
+
     def update_related_objects(
             self,
             django_main_model,
@@ -580,7 +593,6 @@ class PopoloJSONImporter(object):
             popit_to_django_attributes_method,
             popit_related_objects_data,
             django_object,
-            preserve_predicate=lambda o: False,
     ):
         # Find the unchanged related objects so we don't unnecessarily
         # recreate objects.
@@ -592,7 +604,7 @@ class PopoloJSONImporter(object):
                 content_type_id=main_content_type.id,
                 object_id=django_object.id
             )
-            if preserve_predicate(o)
+            if self.should_preserve_related(django_main_model, o)
         ]
         for object_data in popit_related_objects_data:
             wanted_attributes = popit_to_django_attributes_method(
