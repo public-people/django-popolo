@@ -998,6 +998,70 @@ class BasicImporterTests(TestCase):
             person.links.get().url,
             "http://example.org/a-link-without-a-note")
 
+    def test_remove_identifiers_even_if_none_specified(self):
+        existing_person = models.Person.objects.create(name='Algernon')
+        existing_person.identifiers.create(
+            scheme='popolo:person',
+            identifier="a1b2"
+        )
+        existing_person.identifiers.create(
+            scheme='ignorable',
+            identifier="some-data-we-care-nothing-for"
+        )
+        input_json = '''
+{
+    "persons": [
+        {
+            "id": "a1b2",
+            "name": "Alice"
+        }
+    ]
+}
+'''
+        data = json.loads(input_json)
+        importer = PopItImporter(id_prefix='popolo:')
+        importer.import_from_export_json_data(data)
+        self.assertEqual(models.Person.objects.count(), 1)
+        # Reget the person from the database:
+        person = models.Person.objects.get(pk=existing_person.id)
+        self.assertEqual(person.name, 'Alice')
+        self.assertSequenceEqual(
+            person.identifiers.order_by('scheme').values_list('scheme', 'identifier'),
+            [(u'popolo:person', u'a1b2')]
+        )
+
+    def test_remove_identifiers_when_empty_array_specified(self):
+        existing_person = models.Person.objects.create(name='Algernon')
+        existing_person.identifiers.create(
+            scheme='popolo:person',
+            identifier="a1b2"
+        )
+        existing_person.identifiers.create(
+            scheme='ignorable',
+            identifier="some-data-we-care-nothing-for"
+        )
+        input_json = '''
+{
+    "persons": [
+        {
+            "id": "a1b2",
+            "name": "Alice",
+            "identifiers": []
+        }
+    ]
+}
+'''
+        data = json.loads(input_json)
+        importer = PopItImporter(id_prefix='popolo:')
+        importer.import_from_export_json_data(data)
+        self.assertEqual(models.Person.objects.count(), 1)
+        # Reget the person from the database:
+        person = models.Person.objects.get(pk=existing_person.id)
+        self.assertEqual(person.name, 'Alice')
+        self.assertSequenceEqual(
+            person.identifiers.order_by('scheme').values_list('scheme', 'identifier'),
+            [(u'popolo:person', u'a1b2')]
+        )
 
 class SurprisingExceptionTests(TestCase):
 

@@ -278,14 +278,13 @@ class PopoloJSONImporter(object):
             self.create_identifier('organization', org_data['id'], result)
 
         # Update other identifiers:
-        if 'identifiers' in org_data:
-            self.update_related_objects(
-                Organization,
-                self.get_popolo_model_class('Identifier'),
-                self.make_identifier_dict,
-                org_data['identifiers'],
-                result,
-            )
+        self.update_related_objects(
+            Organization,
+            self.get_popolo_model_class('Identifier'),
+            self.make_identifier_dict,
+            org_data.get('identifiers', []),
+            result,
+        )
         # Update contact details:
         self.update_related_objects(
             Organization,
@@ -400,14 +399,13 @@ class PopoloJSONImporter(object):
             result
         )
         # Update other identifiers:
-        if 'identifiers' in person_data:
-            self.update_related_objects(
-                Person,
-                self.get_popolo_model_class('Identifier'),
-                self.make_identifier_dict,
-                person_data['identifiers'],
-                result,
-            )
+        self.update_related_objects(
+            Person,
+            self.get_popolo_model_class('Identifier'),
+            self.make_identifier_dict,
+            person_data.get('identifiers', []),
+            result,
+        )
         # Update contact details:
         self.update_related_objects(
             Person,
