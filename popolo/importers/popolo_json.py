@@ -74,7 +74,7 @@ class PopoloJSONImporter(object):
 
     TRUNCATE_OPTIONS = set(['yes', 'warn', 'exception'])
 
-    def __init__(self, id_prefix=None, truncate='exception'):
+    def __init__(self, id_prefix=None, truncate='exception', **kwargs):
         super(PopoloJSONImporter, self).__init__()
         if id_prefix is None:
             self.id_prefix = 'popit-'
@@ -92,7 +92,18 @@ class PopoloJSONImporter(object):
             'organization': {self.id_prefix + 'organization'},
             'area': {self.id_prefix + 'area'},
         }
+        # And if any extra ID schemes have been requested for
+        # preservation, keep them too:
+        if kwargs.get('id_schemes_to_preserve'):
+            self.add_id_schemes_to_preserve(kwargs['id_schemes_to_preserve'])
         self.observers = []
+
+    def add_id_schemes_to_preserve(self, id_schemes_to_preserve):
+        for collection, schemes in id_schemes_to_preserve.items():
+            if collection not in NEW_COLLECTIONS:
+                raise Exception("Unknown collection: '{}'".format(collection))
+            self.id_schemes_to_preserve.setdefault(collection, {})
+            self.id_schemes_to_preserve[collection].update(schemes)
 
     def add_observer(self, observer):
         self.observers.append(observer)

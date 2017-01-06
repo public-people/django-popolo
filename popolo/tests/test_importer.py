@@ -1063,6 +1063,45 @@ class BasicImporterTests(TestCase):
             [(u'popolo:person', u'a1b2')]
         )
 
+    def test_extra_preserved_identifiers(self):
+        existing_person = models.Person.objects.create(name='Algernon')
+        existing_person.identifiers.create(
+            scheme='popolo:person',
+            identifier="a1b2"
+        )
+        existing_person.identifiers.create(
+            scheme='ignorable',
+            identifier="some-data-we-care-nothing-for"
+        )
+        existing_person.identifiers.create(
+            scheme='preserve-me',
+            identifier="data-that-should-be-kept"
+        )
+        input_json = '''
+{
+    "persons": [
+        {
+            "id": "a1b2",
+            "name": "Alice",
+            "identifiers": []
+        }
+    ]
+}
+'''
+        data = json.loads(input_json)
+        importer = PopItImporter(
+            id_prefix='popolo:', id_schemes_to_preserve={'person': {'preserve-me'}})
+        importer.import_from_export_json_data(data)
+        self.assertEqual(models.Person.objects.count(), 1)
+        # Reget the person from the database:
+        person = models.Person.objects.get(pk=existing_person.id)
+        self.assertEqual(person.name, 'Alice')
+        self.assertSequenceEqual(
+            person.identifiers.order_by('scheme').values_list('scheme', 'identifier'),
+            [(u'popolo:person', u'a1b2'), (u'preserve-me', 'data-that-should-be-kept')]
+        )
+
+
 class SurprisingExceptionTests(TestCase):
 
     def test_exception_unknown_collection_on_get_existing(self):
