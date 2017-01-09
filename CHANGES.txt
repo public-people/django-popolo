@@ -1,3 +1,14 @@
+0.0.8
+    * The importer class can now be used as a mixin.
+    * Fixes for the truncation of values in related objects on
+      importing
+    * The importer management command now uses the generic
+      truncation option rather than specifying particular fields
+      to truncate.
+    * Make the behaviour of the importer when the 'identifiers'
+      object is missing and [] consistent.
+    * Add an option to the importer to preserve existing
+      identifiers with particular schemes.
 0.0.7
     * Raise an error on (rather than silenty ignore) inline
       areas without an 'id' attribute in the importer.
