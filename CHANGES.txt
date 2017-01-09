@@ -1,6 +1,6 @@
 0.0.7
     * Raise an error on (rather than silenty ignore) inline
-      areas without an 'id' attribute.
+      areas without an 'id' attribute in the importer.
     * Fix the import of areas with parents.
     * Don't error if a source or link is missing 'note'.
 0.0.6
