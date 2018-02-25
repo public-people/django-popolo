@@ -296,14 +296,24 @@ class PopoloJSONImporter(object):
             org_data.get('identifiers', []),
             result,
         )
+
         # Update contact details:
+        model_class = self.get_popolo_model_class('ContactDetail')
+        type_choices = model_class._meta.get_field('contact_type').choices
+        choice_values = [c[0].lower() for c in type_choices]
+        contact_details = org_data.get('contact_details', [])
+
+        def valid_filter(c):
+            return all(c['type'] in choice_values for c in c['contact_details'])
+        valid_contact_details = filter(valid_filter, contact_details)
         self.update_related_objects(
             Organization,
-            self.get_popolo_model_class('ContactDetail'),
+            model_class,
             self.make_contact_detail_dict,
-            org_data.get('contact_details', []),
+            valid_contact_details,
             result
         )
+
         # Update links:
         self.update_related_objects(
             Organization,
@@ -346,12 +356,21 @@ class PopoloJSONImporter(object):
         # Create an identifier with the PopIt ID:
         if not existing:
             self.create_identifier('post', post_data['id'], result)
+
         # Update contact details:
+        model_class = self.get_popolo_model_class('ContactDetail')
+        type_choices = model_class._meta.get_field('contact_type').choices
+        choice_values = [c[0].lower() for c in type_choices]
+        contact_details = post_data.get('contact_details', [])
+
+        def valid_filter(c):
+            return all(c['type'] in choice_values for c in c['contact_details'])
+        valid_contact_details = filter(valid_filter, contact_details)
         self.update_related_objects(
             Post,
-            self.get_popolo_model_class('ContactDetail'),
+            model_class,
             self.make_contact_detail_dict,
-            post_data.get('contact_details', []),
+            valid_contact_details,
             result
         )
         # Update links:
@@ -417,14 +436,24 @@ class PopoloJSONImporter(object):
             person_data.get('identifiers', []),
             result,
         )
+
         # Update contact details:
+        model_class = self.get_popolo_model_class('ContactDetail')
+        type_choices = model_class._meta.get_field('contact_type').choices
+        choice_values = [c[0].lower() for c in type_choices]
+        contact_details = person_data.get('contact_details', [])
+
+        def valid_filter(c):
+            return all(c['type'] in choice_values for c in c['contact_details'])
+        valid_contact_details = filter(valid_filter, contact_details)
         self.update_related_objects(
             Person,
-            self.get_popolo_model_class('ContactDetail'),
+            model_class,
             self.make_contact_detail_dict,
-            person_data.get('contact_details', []),
+            valid_contact_details,
             result
         )
+
         # Update links:
         self.update_related_objects(
             Person,
@@ -511,11 +540,19 @@ class PopoloJSONImporter(object):
             self.create_identifier('membership', membership_data['id'], result)
 
         # Update contact details:
+        model_class = self.get_popolo_model_class('ContactDetail')
+        type_choices = model_class._meta.get_field('contact_type').choices
+        choice_values = [c[0].lower() for c in type_choices]
+        contact_details = membership_data.get('contact_details', [])
+
+        def valid_filter(c):
+            return all(c['type'] in choice_values for c in c['contact_details'])
+        valid_contact_details = filter(valid_filter, contact_details)
         self.update_related_objects(
             Membership,
-            self.get_popolo_model_class('ContactDetail'),
+            model_class,
             self.make_contact_detail_dict,
-            membership_data.get('contact_details', []),
+            valid_contact_details,
             result
         )
         # Update links:
