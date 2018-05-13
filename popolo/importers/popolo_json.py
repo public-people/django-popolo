@@ -138,6 +138,14 @@ class PopoloJSONImporter(object):
             django_object, field_name, value)
         setattr(django_object, field_name, possibly_truncated_value)
 
+    def save(self, django_object):
+        if django_object.has_changed:
+            django_object.changeReason = json.dumps({
+                'source': self.popolo_source.url,
+                'type': 'automated',
+            })
+            django_object.save()
+
     def import_from_export_json_data(self, data):
         """Update or create django-popolo models from a PopIt export
 
@@ -198,7 +206,7 @@ class PopoloJSONImporter(object):
                 if parent_id:
                     org_parent = org_id_to_django_object[parent_id]
                     self.set(org, 'parent', org_parent)
-                    org.save()
+                    self.save(org)
         # Create all posts (dependent on organizations already existing)
         post_id_to_django_object = {}
         for post_data in data.get('posts', []):
@@ -238,7 +246,7 @@ class PopoloJSONImporter(object):
             area = area_id_to_django_object[area_id]
             parent_area = area_id_to_django_object[parent_area_id]
             self.set(area, 'parent', parent_area)
-            area.save()
+            self.save(area)
 
     def import_from_export_json(self, json_filename):
         """Update or create django-popolo models from a PopIt export
@@ -283,7 +291,7 @@ class PopoloJSONImporter(object):
         self.set(result, 'founding_date', org_data.get('founding_date', ''))
         self.set(result, 'image', org_data.get('image') or None)
         self.set(result, 'area', area)
-        result.save()
+        self.save(result)
         # Create an identifier with the PopIt ID:
         if not existing:
             self.create_identifier('organization', org_data['id'], result)
@@ -351,7 +359,7 @@ class PopoloJSONImporter(object):
         self.set(result, 'role', post_data['role'])
         self.set(result, 'organization', org_id_to_django_object[post_data['organization_id']])
         self.set(result, 'area', area)
-        result.save()
+        self.save(result)
         # Create an identifier with the PopIt ID:
         if not existing:
             self.create_identifier('post', post_data['id'], result)
@@ -417,12 +425,7 @@ class PopoloJSONImporter(object):
         self.set(result, 'national_identity', person_data.get('national_identity') or None)
         self.set(result, 'image', person_data.get('image') or None)
 
-        if result.has_changed:
-            result.changeReason = json.dumps({
-                'source': self.popolo_source.url,
-                'type': 'automated',
-            })
-            result.save()
+        self.save(result)
 
         # Create an identifier with the PopIt ID:
         if not existing:
@@ -541,7 +544,7 @@ class PopoloJSONImporter(object):
             if not result.end_date:
                 self.set(result, 'end_date', period_data.get('end_date', ''))
 
-        result.save()
+        self.save(result)
         # Create an identifier with the PopIt ID:
         if not existing:
             self.create_identifier('membership', membership_data['id'], result)
@@ -592,7 +595,7 @@ class PopoloJSONImporter(object):
         self.set(result, 'classification', area_data.get('classification') or '')
         self.set(result, 'geom', area_data.get('geom') or None)
         self.set(result, 'inhabitants', area_data.get('inhabitants'))
-        result.save()
+        self.save(result)
         # Create an identifier with the PopIt ID:
         if not existing:
             self.create_identifier('area', area_data['id'], result)
