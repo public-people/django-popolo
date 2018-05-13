@@ -7,13 +7,15 @@ except ImportError:
 from popolo import models
 from .behaviors import admin as generics
 from django.utils.translation import ugettext_lazy as _
+from simple_history.admin import SimpleHistoryAdmin
 
 
 class MembershipInline(admin.StackedInline):
     extra = 0
     model = models.Membership
 
-class PersonAdmin(admin.ModelAdmin):
+
+class PersonAdmin(SimpleHistoryAdmin):
     fieldsets = (
         (None, {
             'fields': ('name', 'gender', 'birth_date', 'death_date')
@@ -40,17 +42,28 @@ class PersonAdmin(admin.ModelAdmin):
         }),
     )
     inlines = generics.BASE_INLINES + [MembershipInline]
+    search_fields = (
+        'name',
+        'family_name',
+        'given_name',
+        'additional_name',
+        'patronymic_name',
+    )
+
 
 class OrganizationMembersInline(MembershipInline):
     verbose_name = _("Member")
     verbose_name_plural = _("Members of this organization")
     fk_name = 'organization'
+
+
 class OrganizationOnBehalfInline(MembershipInline):
     verbose_name = "Proxy member"
     verbose_name_plural = "Members acting on behalf of this organization"
     fk_name = 'on_behalf_of'
 
-class PostAdmin(admin.ModelAdmin):
+
+class PostAdmin(SimpleHistoryAdmin):
     model = models.Post
     fieldsets = (
         (None, {
@@ -65,7 +78,8 @@ class PostAdmin(admin.ModelAdmin):
             generics.LinkAdmin,generics.ContactDetailAdmin,generics.SourceAdmin
         ]
 
-class OrganizationAdmin(admin.ModelAdmin):
+
+class OrganizationAdmin(SimpleHistoryAdmin):
     fieldsets = (
         (None, {
             'fields': ('name', 'founding_date', 'dissolution_date')
@@ -80,8 +94,11 @@ class OrganizationAdmin(admin.ModelAdmin):
         }),
     )
     inlines = generics.BASE_INLINES + [OrganizationMembersInline,OrganizationOnBehalfInline]
+    search_fields = (
+        'name',
+    )
 
 
-admin.site.register(models.Post,PostAdmin)
-admin.site.register(models.Person,PersonAdmin)
-admin.site.register(models.Organization,OrganizationAdmin)
+admin.site.register(models.Post, PostAdmin)
+admin.site.register(models.Person, PersonAdmin)
+admin.site.register(models.Organization, OrganizationAdmin)
