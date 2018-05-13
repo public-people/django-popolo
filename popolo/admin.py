@@ -7,13 +7,15 @@ except ImportError:
 from popolo import models
 from .behaviors import admin as generics
 from django.utils.translation import ugettext_lazy as _
+from simple_history.admin import SimpleHistoryAdmin
 
 
 class MembershipInline(admin.StackedInline):
     extra = 0
     model = models.Membership
 
-class PersonAdmin(admin.ModelAdmin):
+
+class PersonAdmin(SimpleHistoryAdmin):
     fieldsets = (
         (None, {
             'fields': ('name', 'gender', 'birth_date', 'death_date')

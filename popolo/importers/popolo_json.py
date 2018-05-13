@@ -416,7 +416,14 @@ class PopoloJSONImporter(object):
         self.set(result, 'biography', person_data.get('biography') or '')
         self.set(result, 'national_identity', person_data.get('national_identity') or None)
         self.set(result, 'image', person_data.get('image') or None)
-        result.save()
+
+        if result.has_changed:
+            result.changeReason = json.dumps({
+                'source': self.popolo_source.url,
+                'type': 'automated',
+            })
+            result.save()
+
         # Create an identifier with the PopIt ID:
         if not existing:
             self.create_identifier('person', person_data['id'], result)
