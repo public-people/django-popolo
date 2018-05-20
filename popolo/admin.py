@@ -19,22 +19,22 @@ class MembershipInline(admin.StackedInline):
 
 class PersonForm(forms.ModelForm):
 
-    extra_field = forms.CharField()
+    change_reason = forms.CharField(help_text="This should include an http://archive.org/web URL showing the archived URL of a page which serves as a reference for the change you're making.")
+
+    class Meta:
+        model = models.Person
+        fields = '__all__'
 
     def save(self, commit=True):
-        extra_field = self.cleaned_data.get('extra_field', None)
+        change_reason = self.cleaned_data.get('change_reason')
         person = super(PersonForm, self).save(commit=False)
         person.changeReason = json.dumps({
-                'source': extra_field,
+                'source': change_reason,
                 'type': 'manual',
             })
         if commit:
             person.save()
         return person
-
-    class Meta:
-        model = models.Person
-        fields = '__all__'
 
 
 class PersonAdmin(SimpleHistoryAdmin):
@@ -63,7 +63,7 @@ class PersonAdmin(SimpleHistoryAdmin):
             'fields': ('start_date', 'end_date')
         }),
         ('Change reason', {
-            'fields': ('extra_field',),
+            'fields': ('change_reason',),
         })
     )
     inlines = generics.BASE_INLINES + [MembershipInline]
@@ -78,6 +78,17 @@ class PersonAdmin(SimpleHistoryAdmin):
     def get_form(self, request, obj=None, **kwargs):
         kwargs['form'] = PersonForm
         return super(PersonAdmin, self).get_form(request, obj, **kwargs)
+
+    def save_related(self, request, form, formsets, change):
+        change_reason = form.cleaned_data.get('change_reason')
+        for formset in formsets:
+            instances = formset.save(commit=False)
+            for instance in instances:
+                instance.changeReason = json.dumps({
+                    'source': change_reason,
+                    'type': 'manual',
+                })
+        super(PersonAdmin, self).save_related(request, form, formsets, change)
 
 
 class OrganizationMembersInline(MembershipInline):
