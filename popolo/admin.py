@@ -18,8 +18,7 @@ class MembershipInline(admin.StackedInline):
 
 
 class PersonForm(forms.ModelForm):
-
-    change_reason = forms.CharField(help_text="This should include an http://archive.org/web URL showing the archived URL of a page which serves as a reference for the change you're making.")
+    change_reason = forms.CharField(help_text="This should include an http://archive.org/web Save Page Now URL showing the archived URL of a page which serves as a reference for the change you're making.")
 
     class Meta:
         model = models.Person
@@ -103,6 +102,25 @@ class OrganizationOnBehalfInline(MembershipInline):
     fk_name = 'on_behalf_of'
 
 
+class PostForm(forms.ModelForm):
+    change_reason = forms.CharField(help_text="This should include an http://archive.org/web Save Page Now URL showing the archived URL of a page which serves as a reference for the change you're making.")
+
+    class Meta:
+        model = models.Post
+        fields = '__all__'
+
+    def save(self, commit=True):
+        change_reason = self.cleaned_data.get('change_reason')
+        post = super(PostForm, self).save(commit=False)
+        post.changeReason = json.dumps({
+                'source': change_reason,
+                'type': 'manual',
+            })
+        if commit:
+            post.save()
+        return post
+
+
 class PostAdmin(SimpleHistoryAdmin):
     model = models.Post
     fieldsets = (
@@ -113,10 +131,47 @@ class PostAdmin(SimpleHistoryAdmin):
             'classes': ('collapse',),
             'fields': ('other_label', 'area', 'organization')
         }),
+        ('Change reason', {
+            'fields': ('change_reason',),
+        })
     )
     inlines = [
             generics.LinkAdmin,generics.ContactDetailAdmin,generics.SourceAdmin
         ]
+
+    def get_form(self, request, obj=None, **kwargs):
+        kwargs['form'] = PostForm
+        return super(PostAdmin, self).get_form(request, obj, **kwargs)
+
+    def save_related(self, request, form, formsets, change):
+        change_reason = form.cleaned_data.get('change_reason')
+        for formset in formsets:
+            instances = formset.save(commit=False)
+            for instance in instances:
+                instance.changeReason = json.dumps({
+                    'source': change_reason,
+                    'type': 'manual',
+                })
+        super(PostAdmin, self).save_related(request, form, formsets, change)
+
+
+class OrganizationForm(forms.ModelForm):
+    change_reason = forms.CharField(help_text="This should include an http://archive.org/web Save Page Now URL showing the archived URL of a page which serves as a reference for the change you're making.")
+
+    class Meta:
+        model = models.Organization
+        fields = '__all__'
+
+    def save(self, commit=True):
+        change_reason = self.cleaned_data.get('change_reason')
+        organization = super(OrganizationForm, self).save(commit=False)
+        organization.changeReason = json.dumps({
+                'source': change_reason,
+                'type': 'manual',
+            })
+        if commit:
+            organization.save()
+        return organization
 
 
 class OrganizationAdmin(SimpleHistoryAdmin):
@@ -132,11 +187,29 @@ class OrganizationAdmin(SimpleHistoryAdmin):
             'classes': ('collapse',),
             'fields': ('classification','start_date', 'end_date')
         }),
+        ('Change reason', {
+            'fields': ('change_reason',),
+        })
     )
     inlines = generics.BASE_INLINES + [OrganizationMembersInline,OrganizationOnBehalfInline]
     search_fields = (
         'name',
     )
+
+    def get_form(self, request, obj=None, **kwargs):
+        kwargs['form'] = OrganizationForm
+        return super(OrganizationAdmin, self).get_form(request, obj, **kwargs)
+
+    def save_related(self, request, form, formsets, change):
+        change_reason = form.cleaned_data.get('change_reason')
+        for formset in formsets:
+            instances = formset.save(commit=False)
+            for instance in instances:
+                instance.changeReason = json.dumps({
+                    'source': change_reason,
+                    'type': 'manual',
+                })
+        super(OrganizationAdmin, self).save_related(request, form, formsets, change)
 
 
 admin.site.register(models.Post, PostAdmin)
