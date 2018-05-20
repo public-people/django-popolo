@@ -8,11 +8,33 @@ from popolo import models
 from .behaviors import admin as generics
 from django.utils.translation import ugettext_lazy as _
 from simple_history.admin import SimpleHistoryAdmin
+from django import forms
+import json
 
 
 class MembershipInline(admin.StackedInline):
     extra = 0
     model = models.Membership
+
+
+class PersonForm(forms.ModelForm):
+
+    extra_field = forms.CharField()
+
+    def save(self, commit=True):
+        extra_field = self.cleaned_data.get('extra_field', None)
+        person = super(PersonForm, self).save(commit=False)
+        person.changeReason = json.dumps({
+                'source': extra_field,
+                'type': 'manual',
+            })
+        if commit:
+            person.save()
+        return person
+
+    class Meta:
+        model = models.Person
+        fields = '__all__'
 
 
 class PersonAdmin(SimpleHistoryAdmin):
@@ -40,6 +62,9 @@ class PersonAdmin(SimpleHistoryAdmin):
             'classes': ('collapse',),
             'fields': ('start_date', 'end_date')
         }),
+        ('Change reason', {
+            'fields': ('extra_field',),
+        })
     )
     inlines = generics.BASE_INLINES + [MembershipInline]
     search_fields = (
@@ -49,6 +74,10 @@ class PersonAdmin(SimpleHistoryAdmin):
         'additional_name',
         'patronymic_name',
     )
+
+    def get_form(self, request, obj=None, **kwargs):
+        kwargs['form'] = PersonForm
+        return super(PersonAdmin, self).get_form(request, obj, **kwargs)
 
 
 class OrganizationMembersInline(MembershipInline):
