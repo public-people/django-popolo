@@ -625,12 +625,17 @@ class PopoloJSONImporter(object):
             ))
         ContentType = self.get_model_class('contenttypes', 'ContentType')
         content_type = ContentType.objects.get_for_model(django_object)
-        self.get_popolo_model_class('Identifier').objects.create(
+        instance = self.get_popolo_model_class('Identifier')(
             object_id=django_object.id,
             content_type_id=content_type.id,
             scheme=(self.id_prefix + popit_collection),
             identifier=popit_id,
         )
+        instance.changeReason = json.dumps({
+            'source': self.popolo_source.url,
+            'type': 'automated',
+        })
+        instance.save()
 
     def should_preserve_related(self, django_main_model, related_object):
         # We only have rules for preserving identifiers, so ignore
@@ -677,9 +682,13 @@ class PopoloJSONImporter(object):
             if existing.exists():
                 old_objects_to_preserve += existing
             else:
-                new_objects.append(
-                    django_related_model.objects.create(**wanted_attributes)
-                )
+                instance = django_related_model(**wanted_attributes)
+                instance.changeReason = json.dumps({
+                    'source': self.popolo_source.url,
+                    'type': 'automated',
+                })
+                instance.save()
+                new_objects.append(instance)
         object_ids_to_preserve = set(c.id for c in new_objects)
         object_ids_to_preserve.update(c.id for c in old_objects_to_preserve)
         django_related_model.objects.filter(
