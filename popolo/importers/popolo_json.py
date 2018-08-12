@@ -3,10 +3,11 @@ from __future__ import print_function
 from contextlib import contextmanager
 import json
 import sys
-
-from django.utils.six import text_type
+import logging
 
 from django.apps import apps
+
+logger = logging.getLogger(__name__)
 
 NEW_COLLECTIONS = ('organization', 'post', 'person', 'membership', 'area')
 
@@ -140,11 +141,14 @@ class PopoloJSONImporter(object):
 
     def save(self, django_object):
         if django_object.has_changed:
-            django_object.changeReason = json.dumps({
-                'source': self.popolo_source.url,
-                'type': 'automated',
-            })
-            django_object.save()
+            if django_object.is_last_change_manual():
+                logger.info("Not updating %r: last change was manual.")
+            else:
+                django_object.changeReason = json.dumps({
+                    'source': self.popolo_source.url,
+                    'type': 'automated',
+                })
+                django_object.save()
 
     def import_from_export_json_data(self, data):
         """Update or create django-popolo models from a PopIt export

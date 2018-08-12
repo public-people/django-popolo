@@ -24,6 +24,7 @@ from .behaviors.models import Timestampable, Dateframeable, GenericRelatable
 from .querysets import PostQuerySet, OtherNameQuerySet, ContactDetailQuerySet, MembershipQuerySet, OrganizationQuerySet, PersonQuerySet
 from django.forms.models import model_to_dict
 from simple_history.models import HistoricalRecords
+import json
 
 
 class ModelDiffMixin(object):
@@ -71,8 +72,14 @@ class ModelDiffMixin(object):
                              self._meta.fields])
 
 
+class LastChangeMixin(object):
+    def is_last_change_manual(self):
+        change_reason = json.loads(self.history.first().history_change_reason)
+        return change_reason['type'] == 'manual'
+
+
 @python_2_unicode_compatible
-class Person(Dateframeable, Timestampable, ModelDiffMixin, models.Model):
+class Person(Dateframeable, Timestampable, ModelDiffMixin, LastChangeMixin, models.Model):
     """
     A real person, alive or dead
     see schema at http://popoloproject.com/schemas/person.json#
@@ -150,7 +157,7 @@ class Person(Dateframeable, Timestampable, ModelDiffMixin, models.Model):
 
 
 @python_2_unicode_compatible
-class Organization(Dateframeable, Timestampable, ModelDiffMixin, models.Model):
+class Organization(Dateframeable, Timestampable, ModelDiffMixin, LastChangeMixin, models.Model):
     """
     A group with a common purpose or reason for existence that goes beyond the set of people belonging to it
     see schema at http://popoloproject.com/schemas/organization.json#
@@ -229,7 +236,7 @@ class Organization(Dateframeable, Timestampable, ModelDiffMixin, models.Model):
 
 
 @python_2_unicode_compatible
-class Post(Dateframeable, Timestampable, ModelDiffMixin, models.Model):
+class Post(Dateframeable, Timestampable, ModelDiffMixin, LastChangeMixin, models.Model):
     """
     A position that exists independent of the person holding it
     see schema at http://popoloproject.com/schemas/json#
@@ -273,7 +280,7 @@ class Post(Dateframeable, Timestampable, ModelDiffMixin, models.Model):
         return self.label
 
 @python_2_unicode_compatible
-class Membership(Dateframeable, Timestampable, ModelDiffMixin, models.Model):
+class Membership(Dateframeable, Timestampable, ModelDiffMixin, LastChangeMixin, models.Model):
     """
     A relationship between a person and an organization
     see schema at http://popoloproject.com/schemas/membership.json#
@@ -323,7 +330,7 @@ class Membership(Dateframeable, Timestampable, ModelDiffMixin, models.Model):
         return self.label
 
 @python_2_unicode_compatible
-class ContactDetail(Timestampable, Dateframeable, GenericRelatable, ModelDiffMixin, models.Model):
+class ContactDetail(Timestampable, Dateframeable, GenericRelatable, ModelDiffMixin, LastChangeMixin, models.Model):
     """
     A means of contacting an entity
     see schema at http://popoloproject.com/schemas/contact-detail.json#
@@ -368,7 +375,7 @@ class ContactDetail(Timestampable, Dateframeable, GenericRelatable, ModelDiffMix
 
 
 @python_2_unicode_compatible
-class OtherName(Dateframeable, GenericRelatable, ModelDiffMixin, models.Model):
+class OtherName(Dateframeable, GenericRelatable, ModelDiffMixin, LastChangeMixin, models.Model):
     """
     An alternate or former name
     see schema at http://popoloproject.com/schemas/name-component.json#
@@ -389,7 +396,7 @@ class OtherName(Dateframeable, GenericRelatable, ModelDiffMixin, models.Model):
 
 
 @python_2_unicode_compatible
-class Identifier(GenericRelatable, ModelDiffMixin, models.Model):
+class Identifier(GenericRelatable, ModelDiffMixin, LastChangeMixin, models.Model):
     """
     An issued identifier
     see schema at http://popoloproject.com/schemas/identifier.json#
@@ -404,7 +411,7 @@ class Identifier(GenericRelatable, ModelDiffMixin, models.Model):
 
 
 @python_2_unicode_compatible
-class Link(GenericRelatable, ModelDiffMixin, models.Model):
+class Link(GenericRelatable, ModelDiffMixin, LastChangeMixin, models.Model):
     """
     A URL
     see schema at http://popoloproject.com/schemas/link.json#
@@ -419,7 +426,7 @@ class Link(GenericRelatable, ModelDiffMixin, models.Model):
 
 
 @python_2_unicode_compatible
-class Source(GenericRelatable, ModelDiffMixin, models.Model):
+class Source(GenericRelatable, ModelDiffMixin, LastChangeMixin, models.Model):
     """
     A URL for referring to sources of information
     see schema at http://popoloproject.com/schemas/link.json#
@@ -434,7 +441,7 @@ class Source(GenericRelatable, ModelDiffMixin, models.Model):
 
 
 @python_2_unicode_compatible
-class Language(ModelDiffMixin, models.Model):
+class Language(ModelDiffMixin, LastChangeMixin, models.Model):
     """
     Maps languages, with names and 2-char iso 639-1 codes.
     Taken from http://dbpedia.org, using a sparql query
@@ -452,7 +459,7 @@ class Language(ModelDiffMixin, models.Model):
 
 
 @python_2_unicode_compatible
-class Area(GenericRelatable, Dateframeable, Timestampable, ModelDiffMixin, models.Model):
+class Area(GenericRelatable, Dateframeable, Timestampable, ModelDiffMixin, LastChangeMixin, models.Model):
     """
     An area is a geographic area whose geometry may change over time.
     see schema at http://popoloproject.com/schemas/area.json#
@@ -485,7 +492,7 @@ class Area(GenericRelatable, Dateframeable, Timestampable, ModelDiffMixin, model
 
 
 @python_2_unicode_compatible
-class AreaI18Name(ModelDiffMixin, models.Model):
+class AreaI18Name(ModelDiffMixin, LastChangeMixin, models.Model):
     """
     Internationalized name for an Area.
     Contains references to language and area.
