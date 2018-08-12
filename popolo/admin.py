@@ -18,7 +18,12 @@ class MembershipInline(admin.StackedInline):
 
 
 class PersonForm(forms.ModelForm):
-    change_reason = forms.CharField(help_text="This should include an http://archive.org/web Save Page Now URL showing the archived URL of a page which serves as a reference for the change you're making.")
+    change_reason_help = ("This should be a reference to a URL you place in a "
+                          "new Source you add for for this person from "
+                          "http://archive.org/web Save Page Now, showing the "
+                          "archived URL of a page which serves as a reference "
+                          "for the change you're making.")
+    change_reason = forms.CharField(max_length=77, help_text=change_reason_help)
 
     class Meta:
         model = models.Person
@@ -103,7 +108,12 @@ class OrganizationOnBehalfInline(MembershipInline):
 
 
 class PostForm(forms.ModelForm):
-    change_reason = forms.CharField(help_text="This should include an http://archive.org/web Save Page Now URL showing the archived URL of a page which serves as a reference for the change you're making.")
+    change_reason_help = ("This should be a reference to a URL you place in a "
+                          "new Source you add for for this post from "
+                          "http://archive.org/web Save Page Now, showing the "
+                          "archived URL of a page which serves as a reference "
+                          "for the change you're making.")
+    change_reason = forms.CharField(max_length=77, help_text=change_reason_help)
 
     class Meta:
         model = models.Post
@@ -156,7 +166,12 @@ class PostAdmin(SimpleHistoryAdmin):
 
 
 class OrganizationForm(forms.ModelForm):
-    change_reason = forms.CharField(help_text="This should include an http://archive.org/web Save Page Now URL showing the archived URL of a page which serves as a reference for the change you're making.")
+    change_reason_help = ("This should be a reference to a URL you place in a "
+                          "new Source you add for for this organization from "
+                          "http://archive.org/web Save Page Now, showing the "
+                          "archived URL of a page which serves as a reference "
+                          "for the change you're making.")
+    change_reason = forms.CharField(max_length=77, help_text=change_reason_help)
 
     class Meta:
         model = models.Organization
