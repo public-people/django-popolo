@@ -74,8 +74,12 @@ class ModelDiffMixin(object):
 
 class LastChangeMixin(object):
     def is_last_change_manual(self):
-        change_reason = json.loads(self.history.first().history_change_reason)
-        return change_reason['type'] == 'manual'
+        last_change = self.history.first()
+        if last_change:
+            change_reason = json.loads(last_change.history_change_reason)
+            return change_reason['type'] == 'manual'
+        else:
+            return False
 
 
 @python_2_unicode_compatible
