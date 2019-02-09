@@ -13,6 +13,13 @@ class MembershipInline(AjaxSelectAdminStackedInline):
     extra = 0
     model = models.Membership
 
+    form = make_ajax_form(models.Membership, {
+        'person': 'persons',
+        'area': 'areas',
+        'on_behalf_of': 'organizations',
+        'organization': 'organizations',
+    })
+
 
 class PersonForm(forms.ModelForm):
     change_reason_help = ("This should be a reference to a URL you place in a "
@@ -97,23 +104,11 @@ class OrganizationMembersInline(MembershipInline):
     verbose_name_plural = _("Members of this organization")
     fk_name = 'organization'
 
-    form = make_ajax_form(models.Membership, {
-        'person': 'persons',
-        'area': 'areas',
-        'on_behalf_of': 'organizations',
-    })
-
 
 class OrganizationOnBehalfInline(MembershipInline):
     verbose_name = "Proxy member"
     verbose_name_plural = "Members acting on behalf of this organization"
     fk_name = 'on_behalf_of'
-
-    form = make_ajax_form(models.Membership, {
-        'person': 'persons',
-        'area': 'areas',
-        'on_behalf_of': 'organizations',
-    })
 
 
 class PostForm(forms.ModelForm):
