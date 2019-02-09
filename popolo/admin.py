@@ -1,9 +1,6 @@
+from ajax_select import make_ajax_form
+from ajax_select.admin import AjaxSelectAdminStackedInline
 from django.contrib import admin
-try:
-    from django.contrib.contenttypes.admin import GenericTabularInline
-except ImportError:
-    from django.contrib.contenttypes.generic import GenericTabularInline
-
 from popolo import models
 from .behaviors import admin as generics
 from django.utils.translation import ugettext_lazy as _
@@ -12,7 +9,7 @@ from django import forms
 import json
 
 
-class MembershipInline(admin.StackedInline):
+class MembershipInline(AjaxSelectAdminStackedInline):
     extra = 0
     model = models.Membership
 
@@ -100,11 +97,23 @@ class OrganizationMembersInline(MembershipInline):
     verbose_name_plural = _("Members of this organization")
     fk_name = 'organization'
 
+    form = make_ajax_form(models.Membership, {
+        'person': 'persons',
+        'area': 'areas',
+        'on_behalf_of': 'organizations',
+    })
+
 
 class OrganizationOnBehalfInline(MembershipInline):
     verbose_name = "Proxy member"
     verbose_name_plural = "Members acting on behalf of this organization"
     fk_name = 'on_behalf_of'
+
+    form = make_ajax_form(models.Membership, {
+        'person': 'persons',
+        'area': 'areas',
+        'on_behalf_of': 'organizations',
+    })
 
 
 class PostForm(forms.ModelForm):
@@ -227,6 +236,10 @@ class OrganizationAdmin(SimpleHistoryAdmin):
         super(OrganizationAdmin, self).save_related(request, form, formsets, change)
 
 
+class AreaAdmin(SimpleHistoryAdmin):
+    pass
+
+admin.site.register(models.Area, AreaAdmin)
 admin.site.register(models.Post, PostAdmin)
 admin.site.register(models.Person, PersonAdmin)
 admin.site.register(models.Organization, OrganizationAdmin)

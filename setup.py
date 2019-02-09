@@ -41,5 +41,6 @@ setup(
     install_requires=[
         "django-model-utils",
         "django-simple-history==2.0",
+        "django-ajax-selects==1.7.1",
     ],
 )

@@ -39,6 +39,9 @@ need to add it to the Django project's requirements.txt. You can do this from
 GitHub in the usual way, or using the ``mysociety-django-popolo`` package on
 PyPI.
 
+You also need to add ``popolo`` and ``ajax_select`` to your django INSTALLED_APPS.
+
+
 Running the Tests
 ------------------------------------
 
