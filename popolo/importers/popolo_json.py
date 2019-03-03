@@ -427,7 +427,12 @@ class PopoloJSONImporter(object):
         self.set(result, 'summary', summary or '')
         self.set(result, 'biography', person_data.get('biography') or '')
         self.set(result, 'national_identity', person_data.get('national_identity') or None)
-        self.set(result, 'image', person_data.get('image') or None)
+        image_url = person_data.get('image')
+        if not image_url:
+            images = person_data.get('images')
+            if images:
+                image_url = images[0]['url']
+        self.set(result, 'image',  image_url)
 
         self.save(result)
 
