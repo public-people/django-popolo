@@ -1,5 +1,6 @@
 Django
 fake-factory==0.3.2
 django-model-utils
+django-simple-history==2.0
 mock==2.0.0
 coveralls
