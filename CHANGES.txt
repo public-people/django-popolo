@@ -1,3 +1,6 @@
+0.1.0
+    * Minimal updates for Django 2 support.
+
 0.0.8
     * The importer class can now be used as a mixin.
     * Fixes for the truncation of values in related objects on

@@ -30,8 +30,8 @@ class Migration(migrations.Migration):
                 ('classification', models.CharField(help_text='An area category, e.g. city', max_length=512, verbose_name='identifier', blank=True)),
                 ('geom', models.TextField(help_text='A geometry', null=True, verbose_name='geom', blank=True)),
                 ('inhabitants', models.IntegerField(help_text='The total number of inhabitants', null=True, verbose_name='inhabitants', blank=True)),
-                ('content_type', models.ForeignKey(blank=True, to='contenttypes.ContentType', null=True)),
-                ('parent', models.ForeignKey(related_name='children', blank=True, to='popolo.Area', help_text='The area that contains this area', null=True)),
+                ('content_type', models.ForeignKey(blank=True, to='contenttypes.ContentType', null=True, on_delete=models.CASCADE)),
+                ('parent', models.ForeignKey(related_name='children', blank=True, to='popolo.Area', help_text='The area that contains this area', null=True, on_delete=models.CASCADE)),
             ],
             options={
                 'abstract': False,
@@ -42,7 +42,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('name', models.CharField(max_length=255, verbose_name='name')),
-                ('area', models.ForeignKey(related_name='i18n_names', to='popolo.Area')),
+                ('area', models.ForeignKey(related_name='i18n_names', to='popolo.Area', on_delete=models.CASCADE)),
             ],
             options={
                 'verbose_name': 'I18N Name',
@@ -95,7 +95,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='contactdetail',
             name='content_type',
-            field=models.ForeignKey(blank=True, to='contenttypes.ContentType', null=True),
+            field=models.ForeignKey(blank=True, to='contenttypes.ContentType', null=True, on_delete=models.CASCADE),
         ),
         migrations.AlterField(
             model_name='contactdetail',
@@ -120,7 +120,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='identifier',
             name='content_type',
-            field=models.ForeignKey(blank=True, to='contenttypes.ContentType', null=True),
+            field=models.ForeignKey(blank=True, to='contenttypes.ContentType', null=True, on_delete=models.CASCADE),
         ),
         migrations.AlterField(
             model_name='identifier',
@@ -135,7 +135,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='link',
             name='content_type',
-            field=models.ForeignKey(blank=True, to='contenttypes.ContentType', null=True),
+            field=models.ForeignKey(blank=True, to='contenttypes.ContentType', null=True, on_delete=models.CASCADE),
         ),
         migrations.AlterField(
             model_name='link',
@@ -160,7 +160,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='membership',
             name='organization',
-            field=models.ForeignKey(related_name='memberships', blank=True, to='popolo.Organization', help_text='The organization that is a party to the relationship', null=True),
+            field=models.ForeignKey(related_name='memberships', blank=True, to='popolo.Organization', help_text='The organization that is a party to the relationship', null=True, on_delete=models.CASCADE),
         ),
         migrations.AlterField(
             model_name='membership',
@@ -190,7 +190,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='othername',
             name='content_type',
-            field=models.ForeignKey(blank=True, to='contenttypes.ContentType', null=True),
+            field=models.ForeignKey(blank=True, to='contenttypes.ContentType', null=True, on_delete=models.CASCADE),
         ),
         migrations.AlterField(
             model_name='othername',
@@ -230,7 +230,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='source',
             name='content_type',
-            field=models.ForeignKey(blank=True, to='contenttypes.ContentType', null=True),
+            field=models.ForeignKey(blank=True, to='contenttypes.ContentType', null=True, on_delete=models.CASCADE),
         ),
         migrations.AlterField(
             model_name='source',
@@ -245,22 +245,22 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='areai18name',
             name='language',
-            field=models.ForeignKey(to='popolo.Language'),
+            field=models.ForeignKey(to='popolo.Language', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='membership',
             name='area',
-            field=models.ForeignKey(related_name='memberships', blank=True, to='popolo.Area', help_text='The geographic area to which the post is related', null=True),
+            field=models.ForeignKey(related_name='memberships', blank=True, to='popolo.Area', help_text='The geographic area to which the post is related', null=True, on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='organization',
             name='area',
-            field=models.ForeignKey(related_name='organizations', blank=True, to='popolo.Area', help_text='The geographic area to which this organization is related', null=True),
+            field=models.ForeignKey(related_name='organizations', blank=True, to='popolo.Area', help_text='The geographic area to which this organization is related', null=True, on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='post',
             name='area',
-            field=models.ForeignKey(related_name='posts', blank=True, to='popolo.Area', help_text='The geographic area to which the post is related', null=True),
+            field=models.ForeignKey(related_name='posts', blank=True, to='popolo.Area', help_text='The geographic area to which the post is related', null=True, on_delete=models.CASCADE),
         ),
         migrations.AlterUniqueTogether(
             name='areai18name',

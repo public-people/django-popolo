@@ -28,7 +28,7 @@ class Migration(migrations.Migration):
                 ('contact_type', models.CharField(help_text="A type of medium, e.g. 'fax' or 'email'", max_length=12, verbose_name='type', choices=[('FAX', 'Fax'), ('PHONE', 'Telephone'), ('MOBILE', 'Mobile'), ('EMAIL', 'Email'), ('MAIL', 'Snail mail'), ('TWITTER', 'Twitter'), ('FACEBOOK', 'Facebook')])),
                 ('value', models.CharField(help_text='A value, e.g. a phone number or email address', max_length=128, verbose_name='value')),
                 ('note', models.CharField(help_text='A note, e.g. for grouping contact details by physical location', max_length=128, verbose_name='note', blank=True)),
-                ('content_type', models.ForeignKey(to='contenttypes.ContentType')),
+                ('content_type', models.ForeignKey(to='contenttypes.ContentType', on_delete=models.CASCADE)),
             ],
             options={
                 'abstract': False,
@@ -41,7 +41,7 @@ class Migration(migrations.Migration):
                 ('object_id', models.PositiveIntegerField()),
                 ('identifier', models.CharField(help_text='An issued identifier, e.g. a DUNS number', max_length=128, verbose_name='identifier')),
                 ('scheme', models.CharField(help_text='An identifier scheme, e.g. DUNS', max_length=128, verbose_name='scheme', blank=True)),
-                ('content_type', models.ForeignKey(to='contenttypes.ContentType')),
+                ('content_type', models.ForeignKey(to='contenttypes.ContentType', on_delete=models.CASCADE)),
             ],
             options={
                 'abstract': False,
@@ -54,7 +54,7 @@ class Migration(migrations.Migration):
                 ('object_id', models.PositiveIntegerField()),
                 ('url', models.URLField(help_text='A URL', verbose_name='url')),
                 ('note', models.CharField(help_text="A note, e.g. 'Wikipedia page'", max_length=128, verbose_name='note', blank=True)),
-                ('content_type', models.ForeignKey(to='contenttypes.ContentType')),
+                ('content_type', models.ForeignKey(to='contenttypes.ContentType', on_delete=models.CASCADE)),
             ],
             options={
                 'abstract': False,
@@ -87,7 +87,7 @@ class Migration(migrations.Migration):
                 ('classification', models.CharField(help_text='An organization category, e.g. committee', max_length=128, verbose_name='classification', blank=True)),
                 ('dissolution_date', models.CharField(blank=True, help_text='A date of dissolution', max_length=10, verbose_name='dissolution date', validators=[django.core.validators.RegexValidator(regex='^[0-9]{4}(-[0-9]{2}){0,2}$', message='dissolution date must follow the given pattern: ^[0-9]{4}(-[0-9]{2}){0,2}$', code='invalid_dissolution_date')])),
                 ('founding_date', models.CharField(blank=True, help_text='A date of founding', max_length=10, verbose_name='founding date', validators=[django.core.validators.RegexValidator(regex='^[0-9]{4}(-[0-9]{2}){0,2}$', message='founding date must follow the given pattern: ^[0-9]{4}(-[0-9]{2}){0,2}$', code='invalid_founding_date')])),
-                ('parent', models.ForeignKey(related_name='children', blank=True, to='popolo.Organization', help_text='The organization that contains this organization', null=True)),
+                ('parent', models.ForeignKey(related_name='children', blank=True, to='popolo.Organization', help_text='The organization that contains this organization', null=True, on_delete=models.CASCADE)),
             ],
             options={
                 'abstract': False,
@@ -102,7 +102,7 @@ class Migration(migrations.Migration):
                 ('end_date', models.CharField(validators=[django.core.validators.RegexValidator(regex='^[0-9]{4}(-[0-9]{2}){0,2}$', message='Date has wrong format'), popolo.behaviors.models.validate_partial_date], max_length=10, blank=True, help_text='The date when the validity of the item ends', null=True, verbose_name='end date')),
                 ('name', models.CharField(help_text='An alternate or former name', max_length=128, verbose_name='name')),
                 ('note', models.CharField(help_text="A note, e.g. 'Birth name'", max_length=256, verbose_name='note', blank=True)),
-                ('content_type', models.ForeignKey(to='contenttypes.ContentType')),
+                ('content_type', models.ForeignKey(to='contenttypes.ContentType', on_delete=models.CASCADE)),
             ],
             options={
                 'abstract': False,
@@ -146,7 +146,7 @@ class Migration(migrations.Migration):
                 ('updated_at', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, verbose_name='last modification time', editable=False)),
                 ('label', models.CharField(help_text='A label describing the post', max_length=128, verbose_name='label')),
                 ('role', models.CharField(help_text='The function that the holder of the post fulfills', max_length=128, verbose_name='role', blank=True)),
-                ('organization', models.ForeignKey(related_name='posts', to='popolo.Organization', help_text='The organization in which the post is held')),
+                ('organization', models.ForeignKey(related_name='posts', to='popolo.Organization', help_text='The organization in which the post is held', on_delete=models.CASCADE)),
             ],
             options={
                 'abstract': False,
@@ -159,7 +159,7 @@ class Migration(migrations.Migration):
                 ('object_id', models.PositiveIntegerField()),
                 ('url', models.URLField(help_text='A URL', verbose_name='url')),
                 ('note', models.CharField(help_text="A note, e.g. 'Parliament website'", max_length=128, verbose_name='note', blank=True)),
-                ('content_type', models.ForeignKey(to='contenttypes.ContentType')),
+                ('content_type', models.ForeignKey(to='contenttypes.ContentType', on_delete=models.CASCADE)),
             ],
             options={
                 'abstract': False,
@@ -168,21 +168,21 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='membership',
             name='on_behalf_of',
-            field=models.ForeignKey(related_name='memberships_on_behalf_of', blank=True, to='popolo.Organization', help_text='The organization on whose behalf the person is a party to the relationship', null=True),
+            field=models.ForeignKey(related_name='memberships_on_behalf_of', blank=True, to='popolo.Organization', help_text='The organization on whose behalf the person is a party to the relationship', null=True, on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='membership',
             name='organization',
-            field=models.ForeignKey(related_name='memberships', to='popolo.Organization', help_text='The organization that is a party to the relationship'),
+            field=models.ForeignKey(related_name='memberships', to='popolo.Organization', help_text='The organization that is a party to the relationship', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='membership',
             name='person',
-            field=models.ForeignKey(related_name='memberships', to='popolo.Person', help_text='The person who is a party to the relationship'),
+            field=models.ForeignKey(related_name='memberships', to='popolo.Person', help_text='The person who is a party to the relationship', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='membership',
             name='post',
-            field=models.ForeignKey(related_name='memberships', blank=True, to='popolo.Post', help_text='The post held by the person in the organization through this membership', null=True),
+            field=models.ForeignKey(related_name='memberships', blank=True, to='popolo.Post', help_text='The post held by the person in the organization through this membership', null=True, on_delete=models.CASCADE),
         ),
     ]
