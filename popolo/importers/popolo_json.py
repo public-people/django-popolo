@@ -461,7 +461,10 @@ class PopoloJSONImporter(object):
         choice_values = [c[0].lower() for c in type_choices]
         contact_details = person_data.get('contact_details', [])
 
-        def valid_filter(c): return c['type'] in choice_values
+        def valid_filter(c):
+            contact_type =  c.get('type', None) or c['contact_type']
+            return contact_type in choice_values
+
         valid_contact_details = filter(valid_filter, contact_details)
         self.update_related_objects(
             Person,
