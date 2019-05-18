@@ -14,8 +14,10 @@ if not settings.configured:
             }
         },
         INSTALLED_APPS=(
+            'django.contrib.auth',
             'django.contrib.contenttypes',
             'popolo',
+            'simple_history',
         ),
         SITE_ID=1,
         SECRET_KEY='this-is-just-for-tests-so-not-that-secret',
@@ -37,4 +39,3 @@ def runtests():
 
 if __name__ == '__main__':
     runtests()
-

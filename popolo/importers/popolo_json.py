@@ -70,16 +70,23 @@ class PopoloJSONImporter(object):
       you can add that data by overriding one or more of
       update_person, update_membership, etc.
 
+    * Override the attribute "source" to indicate the source
     """
 
     TRUNCATE_OPTIONS = set(['yes', 'warn', 'exception'])
 
-    def __init__(self, id_prefix=None, truncate='exception', **kwargs):
+    def __init__(self, id_prefix=None, truncate='exception', source=None, **kwargs):
         super(PopoloJSONImporter, self).__init__()
         if id_prefix is None:
             self.id_prefix = 'popit-'
         else:
             self.id_prefix = id_prefix
+
+        if source is None:
+            self.source = "{} id prefix {}".format(type(self).__name__, self.id_prefix)
+        else:
+            self.source = source
+
         if truncate not in PopoloJSONImporter.TRUNCATE_OPTIONS:
             msg = "Unknown option for truncate '{0}'; it must be one of: {1}"
             raise ValueError(msg.format(
@@ -141,7 +148,7 @@ class PopoloJSONImporter(object):
     def save(self, django_object):
         if django_object.has_changed:
             django_object.changeReason = json.dumps({
-                'source': self.popolo_source.url,
+                'source': self.source,
                 'type': 'automated',
             })
             django_object.save()
