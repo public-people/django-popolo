@@ -169,10 +169,12 @@ class Organization(Dateframeable, Timestampable, ModelDiffMixin, models.Model):
 
     # reference to "http://popoloproject.com/schemas/organization.json#"
     parent = models.ForeignKey('Organization', blank=True, null=True, related_name='children',
+                               on_delete=models.CASCADE,
                                help_text=_("The organization that contains this organization"))
 
     # reference to "http://popoloproject.com/schemas/area.json#"
     area = models.ForeignKey('Area', blank=True, null=True, related_name='organizations',
+                               on_delete=models.CASCADE,
                                help_text=_("The geographic area to which this organization is related"))
 
     founding_date = models.CharField(_("founding date"), max_length=10, null=True, blank=True, validators=[
@@ -242,10 +244,12 @@ class Post(Dateframeable, Timestampable, ModelDiffMixin, models.Model):
 
     # reference to "http://popoloproject.com/schemas/organization.json#"
     organization = models.ForeignKey('Organization', related_name='posts',
+                                     on_delete=models.CASCADE,
                                      help_text=_("The organization in which the post is held"))
 
     # reference to "http://popoloproject.com/schemas/area.json#"
     area = models.ForeignKey('Area', blank=True, null=True, related_name='posts',
+                               on_delete=models.CASCADE,
                                help_text=_("The geographic area to which the post is related"))
 
     # array of items referencing "http://popoloproject.com/schemas/contact_detail.json#"
@@ -284,22 +288,27 @@ class Membership(Dateframeable, Timestampable, ModelDiffMixin, models.Model):
 
     # reference to "http://popoloproject.com/schemas/person.json#"
     person = models.ForeignKey('Person', to_field="id", related_name='memberships',
+                               on_delete=models.CASCADE,
                                help_text=_("The person who is a party to the relationship"))
 
     # reference to "http://popoloproject.com/schemas/organization.json#"
     organization = models.ForeignKey('Organization', blank=True, null=True,
+                                     on_delete=models.CASCADE,
                                      related_name='memberships',
                                      help_text=_("The organization that is a party to the relationship"))
     on_behalf_of = models.ForeignKey('Organization', blank=True, null=True,
+                                     on_delete=models.CASCADE,
                                      related_name='memberships_on_behalf_of',
                                      help_text=_("The organization on whose behalf the person is a party to the relationship"))
 
     # reference to "http://popoloproject.com/schemas/post.json#"
     post = models.ForeignKey('Post', blank=True, null=True, related_name='memberships',
+                             on_delete=models.CASCADE,
                              help_text=_("The post held by the person in the organization through this membership"))
 
     # reference to "http://popoloproject.com/schemas/area.json#"
     area = models.ForeignKey('Area', blank=True, null=True, related_name='memberships',
+                               on_delete=models.CASCADE,
                                help_text=_("The geographic area to which the post is related"))
 
     # array of items referencing "http://popoloproject.com/schemas/contact_detail.json#"
@@ -467,6 +476,7 @@ class Area(GenericRelatable, Dateframeable, Timestampable, ModelDiffMixin, model
 
     # reference to "http://popoloproject.com/schemas/area.json#"
     parent = models.ForeignKey('Area', blank=True, null=True, related_name='children',
+                               on_delete=models.CASCADE,
                                help_text=_("The area that contains this area"))
 
     # geom property, as text (GeoJson, KML, GML)
@@ -490,8 +500,8 @@ class AreaI18Name(ModelDiffMixin, models.Model):
     Internationalized name for an Area.
     Contains references to language and area.
     """
-    area = models.ForeignKey('Area', related_name='i18n_names')
-    language = models.ForeignKey('Language')
+    area = models.ForeignKey('Area', related_name='i18n_names', on_delete=models.CASCADE)
+    language = models.ForeignKey('Language', on_delete=models.CASCADE)
     name = models.CharField(_("name"), max_length=255)
 
     history = HistoricalRecords()
