@@ -3,7 +3,7 @@ from ajax_select.admin import AjaxSelectAdminStackedInline
 from django.contrib import admin
 from popolo import models
 from .behaviors import admin as generics
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from simple_history.admin import SimpleHistoryAdmin
 from django import forms
 import json

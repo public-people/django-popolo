@@ -1,12 +1,16 @@
-from popolo.views import OrganizationDetailView, PersonDetailView, MembershipDetailView, PostDetailView
+from django.urls import path
 
-__author__ = 'guglielmo'
-from django.conf.urls import url
+from popolo.views import (
+    MembershipDetailView,
+    OrganizationDetailView,
+    PersonDetailView,
+    PostDetailView,
+)
+
 
 urlpatterns = [
-    # organization
-    url(r'^person/(?P<slug>[-\w]+)/$', PersonDetailView.as_view(), name='person-detail'),
-    url(r'^organization/(?P<slug>[-\w]+)/$', OrganizationDetailView.as_view(), name='organization-detail'),
-    url(r'^membership/(?P<slug>[-\w]+)/$', MembershipDetailView.as_view(), name='membership-detail'),
-    url(r'^post/(?P<slug>[-\w]+)/$', PostDetailView.as_view(), name='post-detail'),
+    path('person/<int:pk>/', PersonDetailView.as_view(), name='person-detail'),
+    path('organization/<int:pk>/', OrganizationDetailView.as_view(), name='organization-detail'),
+    path('membership/<int:pk>/', MembershipDetailView.as_view(), name='membership-detail'),
+    path('post/<int:pk>/', PostDetailView.as_view(), name='post-detail'),
 ]

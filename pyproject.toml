@@ -1,0 +1,68 @@
+[build-system]
+requires = ["setuptools>=80"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mysociety-django-popolo"
+dynamic = ["version"]
+description = "A Django-based implementation of the Popolo data specifications."
+readme = {file = "README.rst", content-type = "text/x-rst"}
+requires-python = ">=3.12"
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE"]
+authors = [
+    {name = "Guglielmo Celata", email = "guglielmo@openpolis.it"},
+]
+maintainers = [
+    {name = "Matthew Somerville", email = "matthew@mysociety.org"},
+]
+keywords = ["django", "popolo", "civic-tech"]
+classifiers = [
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Framework :: Django",
+    "Framework :: Django :: 6.0",
+    "Framework :: Django :: 6.1",
+    "Development Status :: 5 - Production/Stable",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "Django>=6.1",
+    "django-model-utils>=5.0.0",
+    "django-simple-history>=3.13.0",
+    "django-ajax-selects>=3.0.3",
+]
+
+[project.optional-dependencies]
+test = [
+    "coverage>=7.17.0",
+    "Faker>=40.44.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/public-people/django-popolo"
+Repository = "https://github.com/public-people/django-popolo"
+Issues = "https://github.com/public-people/django-popolo/issues"
+
+[tool.setuptools.dynamic]
+version = {attr = "popolo.__version__"}
+
+[tool.setuptools.packages.find]
+include = ["popolo*"]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+popolo = ["templates/*.html"]
+
+[tool.coverage.run]
+source = ["popolo"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
