@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 
 from contextlib import contextmanager
+import io
 import json
 import os
 import sys
 from tempfile import NamedTemporaryFile
-
-from mock import Mock, call
-from django.utils import six
+from unittest.mock import Mock, call
 
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
@@ -33,7 +32,7 @@ from popolo import models
 @contextmanager
 def capture_output():
     # Suggested here: http://stackoverflow.com/a/17981937/223092
-    new_out, new_err = six.StringIO(), six.StringIO()
+    new_out, new_err = io.StringIO(), io.StringIO()
     old_out, old_err = sys.stdout, sys.stderr
     try:
         sys.stdout, sys.stderr = new_out, new_err
@@ -502,7 +501,7 @@ class BasicImporterTests(TestCase):
         # With the default, truncate='exception', there should be an
         # exception raised:
         importer = PopItImporter()
-        with self.assertRaisesRegexp(
+        with self.assertRaisesRegex(
                 ValidationError,
                 'Ensure this value has at most 512 characters'):
             # Capture the output just to reduce noise in the test
@@ -547,19 +546,20 @@ class BasicImporterTests(TestCase):
             "name": "Alice",
             "contact_details": [
                 {
-                    "type": "official-work-email",
-                    "value": "ceo@company.example.org"
+                    "type": "email",
+                    "value": "%s"
                 }
             ]
         }
     ]
 }
-'''
+''' % ("ceo@" + "a" * 600 + ".example.org")
         data = json.loads(input_json)
         importer = PopItImporter(truncate='yes')
         importer.import_from_export_json_data(data)
         cd = models.ContactDetail.objects.get()
-        self.assertEqual(cd.contact_type, 'official-wor')
+        self.assertEqual(cd.contact_type, 'email')
+        self.assertEqual(len(cd.value), 512)
         # Also test that they can be updated without creating a
         # duplicate. (This could happen if the implementation uses the
         # overlong version for checking existence, but the truncated
@@ -567,7 +567,8 @@ class BasicImporterTests(TestCase):
         importer.import_from_export_json_data(data)
         self.assertEqual(models.ContactDetail.objects.count(), 1)
         cd = models.ContactDetail.objects.get()
-        self.assertEqual(cd.contact_type, 'official-wor')
+        self.assertEqual(cd.contact_type, 'email')
+        self.assertEqual(len(cd.value), 512)
 
     def test_dont_recreate_related_objects(self):
         input_json = '''
@@ -842,7 +843,7 @@ class BasicImporterTests(TestCase):
         data = json.loads(input_json)
         importer = PopItImporter()
         with capture_output() as (out, err):
-            with self.assertRaisesRegexp(
+            with self.assertRaisesRegex(
                     ValueError,
                     'Found inline area data, but with no "id" attribute'):
                 importer.import_from_export_json_data(data)
@@ -1106,7 +1107,7 @@ class SurprisingExceptionTests(TestCase):
 
     def test_exception_unknown_collection_on_get_existing(self):
         importer = PopItImporter()
-        with self.assertRaisesRegexp(
+        with self.assertRaisesRegex(
                 Exception,
                 r"Unknown collection 'not-a-collection'"):
             importer.get_existing_django_object('not-a-collection', 'commons')
@@ -1114,7 +1115,7 @@ class SurprisingExceptionTests(TestCase):
     def test_exception_unknown_collection_on_create_identifier(self):
         commons = models.Organization.objects.create(name="The Commons")
         importer = PopItImporter()
-        with self.assertRaisesRegexp(
+        with self.assertRaisesRegex(
                 Exception,
                 r"Unknown collection 'not-a-collection'"):
             importer.create_identifier('not-a-collection', 'commons', commons)
@@ -1302,7 +1303,7 @@ class PopItSubclassTests(TestCase):
             "summary": "{}",
             "contact_details": [
                 {{
-                    "type": "official-work-email",
+                    "type": "email",
                     "value": "ceo@company.example.org"
                 }}
             ]
@@ -1345,7 +1346,7 @@ class PopItSubclassTests(TestCase):
         self.assertEqual(person.email, 'alice@example.org')
         self.assertEqual(len(person.summary), 1024)
         contact = models.ContactDetail.objects.get()
-        self.assertEqual(contact.contact_type, 'official-wor')
+        self.assertEqual(contact.contact_type, 'email')
         self.assertEqual(contact.value, 'ceo@company.example.org')
         link = models.Link.objects.get()
         self.assertEqual(link.content_object, models.Organization.objects.get())

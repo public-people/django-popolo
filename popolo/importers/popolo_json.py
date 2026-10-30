@@ -139,15 +139,19 @@ class PopoloJSONImporter(object):
             django_object, field_name, value)
         setattr(django_object, field_name, possibly_truncated_value)
 
+    def get_change_reason(self):
+        change_reason = {'type': 'automated'}
+        popolo_source = getattr(self, 'popolo_source', None)
+        if popolo_source is not None:
+            change_reason['source'] = popolo_source.url
+        return json.dumps(change_reason)
+
     def save(self, django_object):
         if django_object.has_changed:
             if django_object.is_last_change_manual():
                 logger.info("Not updating %r: last change was manual.")
             else:
-                django_object.changeReason = json.dumps({
-                    'source': self.popolo_source.url,
-                    'type': 'automated',
-                })
+                django_object.changeReason = self.get_change_reason()
                 django_object.save()
 
     def import_from_export_json_data(self, data):
@@ -315,7 +319,9 @@ class PopoloJSONImporter(object):
         choice_values = [c[0].lower() for c in type_choices]
         contact_details = org_data.get('contact_details', [])
 
-        def valid_filter(c): return c['type'] in choice_values
+        def valid_filter(c):
+            contact_type = c.get('type') or c.get('contact_type')
+            return contact_type and contact_type.lower() in choice_values
         valid_contact_details = filter(valid_filter, contact_details)
         self.update_related_objects(
             Organization,
@@ -374,7 +380,9 @@ class PopoloJSONImporter(object):
         choice_values = [c[0].lower() for c in type_choices]
         contact_details = post_data.get('contact_details', [])
 
-        def valid_filter(c): return c['type'] in choice_values
+        def valid_filter(c):
+            contact_type = c.get('type') or c.get('contact_type')
+            return contact_type and contact_type.lower() in choice_values
         valid_contact_details = filter(valid_filter, contact_details)
         self.update_related_objects(
             Post,
@@ -463,7 +471,9 @@ class PopoloJSONImporter(object):
         choice_values = [c[0].lower() for c in type_choices]
         contact_details = person_data.get('contact_details', [])
 
-        def valid_filter(c): return c['type'] in choice_values
+        def valid_filter(c):
+            contact_type = c.get('type') or c.get('contact_type')
+            return contact_type and contact_type.lower() in choice_values
         valid_contact_details = filter(valid_filter, contact_details)
         self.update_related_objects(
             Person,
@@ -564,7 +574,9 @@ class PopoloJSONImporter(object):
         choice_values = [c[0].lower() for c in type_choices]
         contact_details = membership_data.get('contact_details', [])
 
-        def valid_filter(c): return c['type'] in choice_values
+        def valid_filter(c):
+            contact_type = c.get('type') or c.get('contact_type')
+            return contact_type and contact_type.lower() in choice_values
         valid_contact_details = filter(valid_filter, contact_details)
         self.update_related_objects(
             Membership,
@@ -640,10 +652,7 @@ class PopoloJSONImporter(object):
             scheme=(self.id_prefix + popit_collection),
             identifier=popit_id,
         )
-        instance.changeReason = json.dumps({
-            'source': self.popolo_source.url,
-            'type': 'automated',
-        })
+        instance.changeReason = self.get_change_reason()
         instance.save()
 
     def should_preserve_related(self, django_main_model, related_object):
@@ -692,10 +701,7 @@ class PopoloJSONImporter(object):
                 old_objects_to_preserve += existing
             else:
                 instance = django_related_model(**wanted_attributes)
-                instance.changeReason = json.dumps({
-                    'source': self.popolo_source.url,
-                    'type': 'automated',
-                })
+                instance.changeReason = self.get_change_reason()
                 instance.save()
                 new_objects.append(instance)
         object_ids_to_preserve = set(c.id for c in new_objects)

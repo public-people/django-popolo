@@ -2,11 +2,8 @@ popolo
 ========================
 
 
-.. image:: https://travis-ci.org/mysociety/django-popolo.svg?branch=master
-  :target: https://travis-ci.org/mysociety/django-popolo
-
-.. image:: https://coveralls.io/repos/mysociety/django-popolo/badge.svg?branch=master&service=github
-  :target: https://coveralls.io/github/mysociety/django-popolo?branch=master
+.. image:: https://github.com/public-people/django-popolo/actions/workflows/tests.yml/badge.svg
+  :target: https://github.com/public-people/django-popolo/actions/workflows/tests.yml
 
 
 Welcome to the documentation for django-popolo!
@@ -39,7 +36,10 @@ need to add it to the Django project's requirements.txt. You can do this from
 GitHub in the usual way, or using the ``mysociety-django-popolo`` package on
 PyPI.
 
-You also need to add ``popolo`` and ``ajax_select`` to your django INSTALLED_APPS.
+You also need to add ``popolo``, ``ajax_select`` and ``simple_history`` to your
+Django ``INSTALLED_APPS``.
+
+This fork requires Python 3.12+ and Django 6.1+.
 
 
 Running the Tests
@@ -47,13 +47,14 @@ Running the Tests
 
 Set up the tests with:
 
-    pip install -r tests_requirements.txt
-    python setup.py install
+.. code:: bash
 
-You can run the tests with::
+    python -m pip install -e ".[test]"
 
-    python setup.py test
+You can run the tests with:
 
-or::
+.. code:: bash
 
     python runtests.py
+
+The test suite also runs automatically in GitHub Actions.

@@ -19,9 +19,12 @@ if not settings.configured:
             'popolo',
             'simple_history',
         ),
+        MIDDLEWARE=[],
         SITE_ID=1,
         SECRET_KEY='this-is-just-for-tests-so-not-that-secret',
         ROOT_URLCONF='popolo.urls',
+        USE_TZ=True,
+        DEFAULT_AUTO_FIELD='django.db.models.AutoField',
     )
 
 
@@ -29,10 +32,9 @@ from django.test.utils import get_runner
 
 
 def runtests():
-    if django.VERSION[:2] >= (1, 7):
-        django.setup()
+    django.setup()
     TestRunner = get_runner(settings)
-    test_runner = TestRunner(verbosity=1, interactive=True, failfast=False)
+    test_runner = TestRunner(verbosity=1, interactive=False, failfast=False)
     failures = test_runner.run_tests(['popolo', ])
     sys.exit(failures)
 

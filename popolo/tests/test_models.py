@@ -6,9 +6,10 @@ Run with "manage.py test popolo, or with python".
 from django.test import TestCase
 from popolo.behaviors.tests import TimestampableTests, DateframeableTests
 from popolo.models import Person, Organization, Post, ContactDetail
-from faker import Factory
+from faker import Faker
 
-faker = Factory.create('it_IT') # a factory to create fake names for tests
+faker = Faker('it_IT')
+
 
 
 class PersonTestCase(DateframeableTests, TimestampableTests, TestCase):

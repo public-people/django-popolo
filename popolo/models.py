@@ -1,22 +1,8 @@
-try:
-    from django.contrib.contenttypes.fields import GenericRelation
-except ImportError:
-    # This fallback import is the version that was deprecated in
-    # Django 1.7 and is removed in 1.9:
-    from django.contrib.contenttypes.generic import GenericRelation
-
-try:
-    # PassTrhroughManager was removed in django-model-utils 2.4
-    # see issue #22 at https://github.com/openpolis/django-popolo/issues/22
-    from model_utils.managers import PassThroughManager
-except ImportError:
-    pass
-
+from django.contrib.contenttypes.fields import GenericRelation
 from django.core.validators import RegexValidator
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 from model_utils import Choices
-from django.utils.encoding import python_2_unicode_compatible
-from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 
@@ -75,14 +61,15 @@ class ModelDiffMixin(object):
 class LastChangeMixin(object):
     def is_last_change_manual(self):
         last_change = self.history.first()
-        if last_change:
-            change_reason = json.loads(last_change.history_change_reason)
-            return change_reason['type'] == 'manual'
-        else:
+        if not last_change or not last_change.history_change_reason:
             return False
+        try:
+            change_reason = json.loads(last_change.history_change_reason)
+        except (TypeError, ValueError):
+            return False
+        return change_reason.get('type') == 'manual'
 
 
-@python_2_unicode_compatible
 class Person(Dateframeable, Timestampable, ModelDiffMixin, LastChangeMixin, models.Model):
     """
     A real person, alive or dead
@@ -130,11 +117,7 @@ class Person(Dateframeable, Timestampable, ModelDiffMixin, LastChangeMixin, mode
     class Meta:
         verbose_name_plural="People"
 
-    try:
-        # PassTrhroughManager was removed in django-model-utils 2.4, see issue #22
-        objects = PassThroughManager.for_queryset_class(PersonQuerySet)()
-    except:
-        objects = PersonQuerySet.as_manager()
+    objects = PersonQuerySet.as_manager()
 
     def add_membership(self, organization):
         m = Membership(person=self, organization=organization)
@@ -160,7 +143,6 @@ class Person(Dateframeable, Timestampable, ModelDiffMixin, LastChangeMixin, mode
         return self.name
 
 
-@python_2_unicode_compatible
 class Organization(Dateframeable, Timestampable, ModelDiffMixin, LastChangeMixin, models.Model):
     """
     A group with a common purpose or reason for existence that goes beyond the set of people belonging to it
@@ -180,11 +162,11 @@ class Organization(Dateframeable, Timestampable, ModelDiffMixin, LastChangeMixin
 
     # reference to "http://popoloproject.com/schemas/organization.json#"
     parent = models.ForeignKey('Organization', blank=True, null=True, related_name='children',
-                               help_text=_("The organization that contains this organization"))
+                               help_text=_("The organization that contains this organization"), on_delete=models.CASCADE)
 
     # reference to "http://popoloproject.com/schemas/area.json#"
     area = models.ForeignKey('Area', blank=True, null=True, related_name='organizations',
-                               help_text=_("The geographic area to which this organization is related"))
+                               help_text=_("The geographic area to which this organization is related"), on_delete=models.CASCADE)
 
     founding_date = models.CharField(_("founding date"), max_length=10, null=True, blank=True, validators=[
                     RegexValidator(
@@ -213,11 +195,7 @@ class Organization(Dateframeable, Timestampable, ModelDiffMixin, LastChangeMixin
 
     history = HistoricalRecords()
 
-    try:
-        # PassTrhroughManager was removed in django-model-utils 2.4, see issue #22
-        objects = PassThroughManager.for_queryset_class(OrganizationQuerySet)()
-    except:
-        objects = OrganizationQuerySet.as_manager()
+    objects = OrganizationQuerySet.as_manager()
 
     def add_member(self, person):
         m = Membership(organization=self, person=person)
@@ -239,7 +217,6 @@ class Organization(Dateframeable, Timestampable, ModelDiffMixin, LastChangeMixin
         return self.name
 
 
-@python_2_unicode_compatible
 class Post(Dateframeable, Timestampable, ModelDiffMixin, LastChangeMixin, models.Model):
     """
     A position that exists independent of the person holding it
@@ -253,11 +230,11 @@ class Post(Dateframeable, Timestampable, ModelDiffMixin, LastChangeMixin, models
 
     # reference to "http://popoloproject.com/schemas/organization.json#"
     organization = models.ForeignKey('Organization', related_name='posts',
-                                     help_text=_("The organization in which the post is held"))
+                                     help_text=_("The organization in which the post is held"), on_delete=models.CASCADE)
 
     # reference to "http://popoloproject.com/schemas/area.json#"
     area = models.ForeignKey('Area', blank=True, null=True, related_name='posts',
-                               help_text=_("The geographic area to which the post is related"))
+                               help_text=_("The geographic area to which the post is related"), on_delete=models.CASCADE)
 
     # array of items referencing "http://popoloproject.com/schemas/contact_detail.json#"
     contact_details = GenericRelation('ContactDetail', help_text="Means of contacting the holder of the post")
@@ -270,11 +247,7 @@ class Post(Dateframeable, Timestampable, ModelDiffMixin, LastChangeMixin, models
 
     history = HistoricalRecords()
 
-    try:
-        # PassTrhroughManager was removed in django-model-utils 2.4, see issue #22
-        objects = PassThroughManager.for_queryset_class(PostQuerySet)()
-    except:
-        objects = PostQuerySet.as_manager()
+    objects = PostQuerySet.as_manager()
 
     def add_person(self, person):
         m = Membership(post=self, person=person, organization=self.organization)
@@ -283,7 +256,6 @@ class Post(Dateframeable, Timestampable, ModelDiffMixin, LastChangeMixin, models
     def __str__(self):
         return self.label
 
-@python_2_unicode_compatible
 class Membership(Dateframeable, Timestampable, ModelDiffMixin, LastChangeMixin, models.Model):
     """
     A relationship between a person and an organization
@@ -295,23 +267,23 @@ class Membership(Dateframeable, Timestampable, ModelDiffMixin, LastChangeMixin, 
 
     # reference to "http://popoloproject.com/schemas/person.json#"
     person = models.ForeignKey('Person', to_field="id", related_name='memberships',
-                               help_text=_("The person who is a party to the relationship"))
+                               help_text=_("The person who is a party to the relationship"), on_delete=models.CASCADE)
 
     # reference to "http://popoloproject.com/schemas/organization.json#"
     organization = models.ForeignKey('Organization', blank=True, null=True,
                                      related_name='memberships',
-                                     help_text=_("The organization that is a party to the relationship"))
+                                     help_text=_("The organization that is a party to the relationship"), on_delete=models.CASCADE)
     on_behalf_of = models.ForeignKey('Organization', blank=True, null=True,
                                      related_name='memberships_on_behalf_of',
-                                     help_text=_("The organization on whose behalf the person is a party to the relationship"))
+                                     help_text=_("The organization on whose behalf the person is a party to the relationship"), on_delete=models.CASCADE)
 
     # reference to "http://popoloproject.com/schemas/post.json#"
     post = models.ForeignKey('Post', blank=True, null=True, related_name='memberships',
-                             help_text=_("The post held by the person in the organization through this membership"))
+                             help_text=_("The post held by the person in the organization through this membership"), on_delete=models.CASCADE)
 
     # reference to "http://popoloproject.com/schemas/area.json#"
     area = models.ForeignKey('Area', blank=True, null=True, related_name='memberships',
-                               help_text=_("The geographic area to which the post is related"))
+                               help_text=_("The geographic area to which the post is related"), on_delete=models.CASCADE)
 
     # array of items referencing "http://popoloproject.com/schemas/contact_detail.json#"
     contact_details = GenericRelation('ContactDetail', help_text="Means of contacting the member of the organization")
@@ -324,16 +296,11 @@ class Membership(Dateframeable, Timestampable, ModelDiffMixin, LastChangeMixin, 
 
     history = HistoricalRecords()
 
-    try:
-        # PassTrhroughManager was removed in django-model-utils 2.4, see issue #22
-        objects = PassThroughManager.for_queryset_class(MembershipQuerySet)()
-    except:
-        objects = MembershipQuerySet.as_manager()
+    objects = MembershipQuerySet.as_manager()
 
     def __str__(self):
         return self.label
 
-@python_2_unicode_compatible
 class ContactDetail(Timestampable, Dateframeable, GenericRelatable, ModelDiffMixin, LastChangeMixin, models.Model):
     """
     A means of contacting an entity
@@ -368,17 +335,12 @@ class ContactDetail(Timestampable, Dateframeable, GenericRelatable, ModelDiffMix
 
     history = HistoricalRecords()
 
-    try:
-        # PassTrhroughManager was removed in django-model-utils 2.4, see issue #22
-        objects = PassThroughManager.for_queryset_class(ContactDetailQuerySet)()
-    except:
-        objects = ContactDetailQuerySet.as_manager()
+    objects = ContactDetailQuerySet.as_manager()
 
     def __str__(self):
         return u"{0} - {1}".format(self.value, self.contact_type)
 
 
-@python_2_unicode_compatible
 class OtherName(Dateframeable, GenericRelatable, ModelDiffMixin, LastChangeMixin, models.Model):
     """
     An alternate or former name
@@ -389,17 +351,12 @@ class OtherName(Dateframeable, GenericRelatable, ModelDiffMixin, LastChangeMixin
 
     history = HistoricalRecords()
 
-    try:
-        # PassTrhroughManager was removed in django-model-utils 2.4, see issue #22
-        objects = PassThroughManager.for_queryset_class(OtherNameQuerySet)()
-    except:
-        objects = OtherNameQuerySet.as_manager()
+    objects = OtherNameQuerySet.as_manager()
 
     def __str__(self):
         return self.name
 
 
-@python_2_unicode_compatible
 class Identifier(GenericRelatable, ModelDiffMixin, LastChangeMixin, models.Model):
     """
     An issued identifier
@@ -414,7 +371,6 @@ class Identifier(GenericRelatable, ModelDiffMixin, LastChangeMixin, models.Model
         return "{0}: {1}".format(self.scheme, self.identifier)
 
 
-@python_2_unicode_compatible
 class Link(GenericRelatable, ModelDiffMixin, LastChangeMixin, models.Model):
     """
     A URL
@@ -429,7 +385,6 @@ class Link(GenericRelatable, ModelDiffMixin, LastChangeMixin, models.Model):
         return self.url
 
 
-@python_2_unicode_compatible
 class Source(GenericRelatable, ModelDiffMixin, LastChangeMixin, models.Model):
     """
     A URL for referring to sources of information
@@ -444,7 +399,6 @@ class Source(GenericRelatable, ModelDiffMixin, LastChangeMixin, models.Model):
         return self.url
 
 
-@python_2_unicode_compatible
 class Language(ModelDiffMixin, LastChangeMixin, models.Model):
     """
     Maps languages, with names and 2-char iso 639-1 codes.
@@ -462,7 +416,6 @@ class Language(ModelDiffMixin, LastChangeMixin, models.Model):
         return u"{0} ({1})".format(self.name, self.iso639_1_code)
 
 
-@python_2_unicode_compatible
 class Area(GenericRelatable, Dateframeable, Timestampable, ModelDiffMixin, LastChangeMixin, models.Model):
     """
     An area is a geographic area whose geometry may change over time.
@@ -478,7 +431,7 @@ class Area(GenericRelatable, Dateframeable, Timestampable, ModelDiffMixin, LastC
 
     # reference to "http://popoloproject.com/schemas/area.json#"
     parent = models.ForeignKey('Area', blank=True, null=True, related_name='children',
-                               help_text=_("The area that contains this area"))
+                               help_text=_("The area that contains this area"), on_delete=models.CASCADE)
 
     # geom property, as text (GeoJson, KML, GML)
     geom = models.TextField(_("geom"), null=True, blank=True, help_text=_("A geometry"))
@@ -495,14 +448,13 @@ class Area(GenericRelatable, Dateframeable, Timestampable, ModelDiffMixin, LastC
         return self.name
 
 
-@python_2_unicode_compatible
 class AreaI18Name(ModelDiffMixin, LastChangeMixin, models.Model):
     """
     Internationalized name for an Area.
     Contains references to language and area.
     """
-    area = models.ForeignKey('Area', related_name='i18n_names')
-    language = models.ForeignKey('Language')
+    area = models.ForeignKey('Area', related_name='i18n_names', on_delete=models.CASCADE)
+    language = models.ForeignKey('Language', on_delete=models.CASCADE)
     name = models.CharField(_("name"), max_length=255)
 
     history = HistoricalRecords()

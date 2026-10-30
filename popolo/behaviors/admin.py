@@ -1,7 +1,4 @@
-try:
-    from django.contrib.contenttypes.admin import GenericTabularInline,GenericStackedInline
-except ImportError:
-    from django.contrib.contenttypes.generic import GenericTabularInline,GenericStackedInline
+from django.contrib.contenttypes.admin import GenericStackedInline, GenericTabularInline
 from popolo import models, behaviors
 
 class LinkAdmin(GenericTabularInline):

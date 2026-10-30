@@ -1,14 +1,15 @@
 import os
-from setuptools import setup, find_packages
+
+from setuptools import find_packages, setup
 
 
 def read_file(filename):
-    """Read a file into a string"""
     path = os.path.abspath(os.path.dirname(__file__))
     filepath = os.path.join(path, filename)
     try:
-        return open(filepath).read()
-    except IOError:
+        with open(filepath, encoding='utf-8') as f:
+            return f.read()
+    except OSError:
         return ''
 
 
@@ -21,26 +22,36 @@ setup(
     maintainer_email='matthew@mysociety.org',
     packages=find_packages(),
     include_package_data=True,
-    url='http://github.com/mysociety/django-popolo',
-    license='Affero',
-    description=u' '.join(__import__('popolo').__doc__.splitlines()).strip(),
+    url='https://github.com/public-people/django-popolo',
+    license='AGPL-3.0-or-later',
+    description=' '.join(__import__('popolo').__doc__.splitlines()).strip(),
+    long_description=read_file('README.rst'),
+    long_description_content_type='text/x-rst',
+    python_requires='>=3.12',
     classifiers=[
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
         'Intended Audience :: Developers',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.13',
+        'Programming Language :: Python :: 3.14',
         'Framework :: Django',
+        'Framework :: Django :: 6.0',
+        'Framework :: Django :: 6.1',
         'Development Status :: 5 - Production/Stable',
         'Operating System :: OS Independent',
     ],
-    long_description=read_file('README.rst'),
-    test_suite="runtests.runtests",
     zip_safe=False,
-    tests_require=['fake-factory'],
     install_requires=[
-        "django-model-utils",
-        "django-simple-history==2.0",
-        "django-ajax-selects==1.7.1",
+        'Django>=6.1',
+        'django-model-utils>=5.0.0',
+        'django-simple-history>=3.13.0',
+        'django-ajax-selects>=3.0.3',
     ],
+    extras_require={
+        'test': [
+            'coverage>=7.17.0',
+            'Faker>=40.44.0',
+        ],
+    },
 )
