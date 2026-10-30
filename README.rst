@@ -45,16 +45,19 @@ This fork requires Python 3.12+ and Django 6.1+.
 Running the Tests
 ------------------------------------
 
-Set up the tests with:
+This project uses `uv <https://docs.astral.sh/uv/>`_ and a standard
+``pyproject.toml``. Install the test dependencies and create the local
+environment with:
 
 .. code:: bash
 
-    python -m pip install -e ".[test]"
+    uv sync --extra test
 
-You can run the tests with:
+Run the tests with:
 
 .. code:: bash
 
-    python runtests.py
+    uv run coverage run ./runtests.py
+    uv run coverage report
 
 The test suite also runs automatically in GitHub Actions.

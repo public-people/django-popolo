@@ -1,5 +1,6 @@
 0.2.0
     * Support Python 3.12+ and Django 6.1.
+    * Migrate packaging to pyproject.toml and uv.
     * Update django-model-utils, django-simple-history and
       django-ajax-selects for current Django releases.
     * Add explicit ON DELETE behaviour to database models and migrations.

@@ -13,3 +13,6 @@ docs/_build/*
 dist/*
 /build
 /htmlcov
+.venv/
+venv/
+env/
